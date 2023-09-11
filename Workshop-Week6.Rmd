@@ -1,0 +1,382 @@
+---
+title: "Workshop - Week 6"
+---
+
+```{r setup, include=FALSE}
+par(family="sans", cex=0.8, cex.axis=1.0, cex.lab=1.0, cex.main=1.1, cex.sub=1.0)
+```
+
+# Linear spectral statistics
+
+Remember, we can generate one realisation of the sample covariance matrix $\mathbf{S}_n$.
+```{r}
+p = 200
+n = 800
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / (n-1)
+```
+
+```{r}
+dim(Sn)
+```
+
+Remember, linear spectral statistics are function of the eigenvalues of the sample covariance matrix $\mathbf{S}_n$. They are easy to obtain by using the `eigen` function in R. For example, we can calculate the *generalised variance* statistics.
+```{r}
+L = eigen(Sn, only.values = TRUE)$values
+GV = sum(log(L))/p
+```
+
+```{r}
+GV
+```
+
+# Central Limit Theorem (CLT) for Linear Spectral Statistics
+
+## Sampling the test statistic
+
+To look at the CLT, we need to simulate a large number of sample covariance matrices and then calculate the sum of their eigenvalues (or functions of the eigenvalues) divided by $p$. To make things easier, we are going to study the test statistic
+$$
+\mathbf{T}_n = \frac{1}{p}\sum_{k=1}^p \lambda_k.
+$$
+Notice here that the test function $\varphi(x) = x$.
+
+```{r}
+N = 1000
+TS = numeric(N) # Test statistics
+for (i in 1:N) {
+  p = 100
+  n = 400
+  X = matrix(rnorm(p*n), p, n)
+  Sn = X %*% t(X) / n
+  L=eigen(Sn, only.values = TRUE)$values
+  TS[i] = sum(L)/p
+}
+```
+
+Alternatively,
+
+```{r}
+N = 1000
+TS = replicate(N, {
+  p = 100
+  n = 400
+  X = matrix(rnorm(p*n), p, n)
+  Sn = X %*% t(X) / n
+  L=eigen(Sn, only.values = TRUE)$values
+  TS[i] = sum(L)/p
+})
+```
+
+
+```{r}
+length(TS)
+```
+
+```{r}
+TS[1:20]
+```
+
+## Histogram of the test statistic distribution
+
+We can now plot a histogram of the fluctuations on this test statistic.
+```{r}
+hist(TS, breaks="FD", freq=FALSE)
+```
+
+## Moment of the MP distribution
+
+We want to check the CLT by look at the deviation from $F_y(\varphi)$ for $\varphi(x) = x$. We know that
+$$
+F_{s,t}(\varphi) = \int \varphi(x)\,F_{s,t}(x)dx = \int x\,F_{s,t}(x) dx = \frac{1}{1-t}
+$$
+where $F_{s,t}$ is the LSD for the random Fisher matrix and remember that $s=y, t=0$ gives $F_{y,0} = F_y$ is the Marchenko-Pastur distribution so that means
+$$
+F_{y}(\varphi) = \int x\,F_{y}(x)dx = 1.
+$$
+
+## CLT
+
+The theorem that we looked at this week told us that the quantity
+$$ p \left(F^{\mathbf{S}_n}(\varphi) - F_{y_n}(\varphi) \right) $$
+is Normally distributed with a mean and variance that we can calculate explicitly.
+
+Since 
+$$
+F^{\mathbf{S}_n} = \frac{1}{p} \sum_{k=1}^p \delta_{\lambda_k}
+$$
+we have, in the case $\varphi(x) = x$ that
+$$
+F^{\mathbf{S}_n}(\varphi) = \frac{1}{p} \sum_{k=1}^p \varphi(\lambda_k) = \frac{1}{p} \sum_{k=1}^p \lambda_k
+$$
+
+And we see from the histogram above that $F^{\mathbf{S}_n}(\varphi)$ should fluctuate around 1. In other words, the mean difference between $F^{\mathbf{S}_n}(\varphi)$ and $F_{y_n}(\varphi)$ should be zero.
+
+The CLT we calculated this week also gave us the variance
+$$
+2 y.
+$$
+This means that the variance of the difference between $F^{\mathbf{S}_n}(\varphi)$ and $F_{y_n}(\varphi)$ should be equal to
+$$
+  2 y_n = 2 \frac{p}{n}.
+$$
+
+```{r}
+var(p*(TS-1))
+```
+
+```{r}
+2 * p / n
+```
+
+# In terms of Xn
+
+If we redo the first simulation in terms of $$X_n = p ( \frac{1}{p} \sum_{i=1}^p \lambda_i - 1)$$, the $X_n$ is centered at zero and has variance equal to $2p/n$.
+
+```{r}
+N = 1000
+Xn = numeric(N)
+for (i in 1:N) {
+  p = 200
+  n = 400
+  X = matrix(rnorm(p*n), p, n)
+  Sn = X %*% t(X) / n
+  L=eigen(Sn, only.values = TRUE)$values
+  Xn[i] = p*(sum(L)/p - 1)
+}
+```
+
+```{r}
+hist(Xn, breaks=50, freq=FALSE)
+curve(dnorm(x, mean=0, sd=2*p/n), from=-10, to=10, col=6, lwd=2, add=TRUE)
+```
+
+# A different test function
+
+We redo the above calculations in the case $\varphi(x) = \log(x)$.
+
+```{r}
+N = 1000
+TS = numeric(N)
+for (i in 1:N) {
+  p = 200
+  n = 400
+  X = matrix(rnorm(p*n), p, n)
+  Sn = X %*% t(X) / n
+  L=eigen(Sn, only.values = TRUE)$values
+  TS[i] = sum(log(L))/p
+}
+```
+
+```{r}
+hist(TS, breaks="FD", freq=FALSE)
+```
+In the case $\varphi(x) = \log(x)$ and $h = \sqrt{y}$,
+$$
+F_{y}(\varphi) = \int \log(x)\,F_{y}(x)dx = -\log(1-y)\frac{1-y}{y}-1
+$$
+```{r}
+y = p/n
+mu = -log(1-y)*(1-y)/y - 1
+mu
+```
+
+```{r}
+hist(TS, breaks="FD", freq=FALSE)
+curve(dnorm(x, mean=mu, sd=0.006), from=mu-0.1, to=mu+0.1, col=6, lwd=2, add=TRUE)
+```
+
+# Fisher LSD
+
+We had for the MP case:
+
+```{r}
+dmp = function(x, y, sigma=1) {
+  a = (1-sqrt(y))^2
+  b = (1+sqrt(y))^2
+  ifelse(x <= a | x >= b, 0, suppressWarnings(sqrt((x - a) * (b - x))/(2 * pi * sigma * x * y)))
+}
+```
+
+We will implement a similar function for the density of the Fisher LSD given by $P_{s,t}(x)$ in the lectures (week 5).
+
+```{r}
+dfisher = function(x, s, t) {
+  h = sqrt(s+t-s*t)
+  a = (1-h)^2/(1-t)^2
+  b = (1+h)^2/(1-t)^2
+  ifelse(x <= a | x >= b, 0, suppressWarnings(sqrt((x - a) * (b - x))*(1-t)/(2 * pi * x *(s+t*x))))
+}
+```
+
+```{r}
+range.fisher = function(s, t) {
+  h = sqrt(s+t-s*t)
+  a = (1-h)^2/(1-t)^2
+  b = (1+h)^2/(1-t)^2
+  c(a,b)
+}
+```
+
+Remember that the Fisher distribution is a more general case than the MP LSD. We can obtain the MP from the Fisher by setting $s=y$ and $t=0$.
+
+```{r}
+p=200
+n=800
+curve(dfisher(x, s=p/n, t=0), from = 0, to = 3.5, lty=1, lwd=2)
+curve(dmp(x, y=p/n), from = 0, to = 3.5, lty=2, lwd=2, col=3, add=TRUE)
+```
+
+
+```{r}
+curve(dfisher(x, s=1/5, t=1/5), from = 0, to = 7, lty=1, lwd=2, n=300) # BLACK
+curve(dfisher(x, s=1/10, t=2/4), from = 0, to = 7, lty=1, lwd=2, col=6, n=300, add=TRUE) # MAGENTA
+```
+This gives the lower and upper bounds of the distribution for a choice of parameters.
+
+```{r}
+range.fisher(s=1/10, t=2/4)
+```
+
+##
+
+```{r}
+k = 5
+p = 100*k
+n1 = 400*k
+n2 = 800*k
+X1 = matrix(rnorm(p*n1), p, n1)
+X2 = matrix(rnorm(p*n2), p, n2)
+Sn1 = X1 %*% t(X1) / n1
+Sn2 = X2 %*% t(X2) / n2
+SS = Sn1 %*% solve(Sn2)
+L=eigen(SS, only.values = TRUE)$values
+```
+
+```{r}
+hist(L, breaks=50, freq=FALSE, main="Density of Fisher against MP")
+curve(dmp(x, y=p/n1), from=0, to=1.5*max(L), col=6, lwd=2, add=TRUE)
+curve(dfisher(x, s=p/n1, t=p/n2), from=0, to=1.5*max(L), col=3, lwd=2, add=TRUE)
+```
+```{r}
+p = 100
+n1 = 400
+n2 = 800
+t= p / n2
+mu = 1/(1-t)
+mu
+```
+
+We consider the CLT in the case where $\varphi(x) = x$, in other words, the mean of the sample eigenvalues. The mean of the Fisher density is equal to $1/(1-t)$.
+
+```{r}
+N = 1000
+TS = replicate(N, {
+  p = 100
+  n1 = 400
+  n2 = 800
+  X1 = matrix(rnorm(p*n1), p, n1)
+  X2 = matrix(rnorm(p*n2), p, n2)
+  Sn1 = X1 %*% t(X1) / n1
+  Sn2 = X2 %*% t(X2) / n2
+  SS = Sn1 %*% solve(Sn2)
+  L=eigen(SS, only.values = TRUE)$values
+  TS[i] = sum(L)/p
+})
+```
+
+```{r}
+hist(L, breaks=50, freq=FALSE, main="Density of Test Statistic")
+abline(v=mu, col=7, lwd=4)
+abline(v=mean(L), col=2, lwd=4, lty=2)
+```
+```{r}
+mean(L)
+```
+
+```{r}
+mu
+```
+
+## Speeding up simulations
+
+### Future apply (see Tutorial, Week 5 and Week 7)
+
+```{r}
+library(future.apply)
+```
+
+```{r}
+plan(multisession, workers = 10)
+```
+
+```{r}
+N = 1000
+TS = future_replicate(N, {
+  p = 100
+  n1 = 400
+  n2 = 800
+  X1 = matrix(rnorm(p*n1), p, n1)
+  X2 = matrix(rnorm(p*n2), p, n2)
+  Sn1 = X1 %*% t(X1) / n1
+  Sn2 = X2 %*% t(X2) / n2
+  SS = Sn1 %*% solve(Sn2)
+  L=eigen(SS, only.values = TRUE)$values
+  sum(L)/p
+})
+```
+
+## Faster simulations
+
+```{r}
+library(mvnfast)
+```
+
+```{r}
+mu = rep(0, p)
+Sigma = diag(p)
+X = rmvn(n, mu, Sigma)
+```
+
+```{r}
+ncores = 10
+N = 1000
+TS = replicate(N, {
+  p = 100
+  n1 = 400
+  n2 = 800
+  mu = rep(0, p)
+  Sigma = diag(p)
+  
+  X1 = rmvn(n1, mu, Sigma, ncores=10)
+  X2 = rmvn(n2, mu, Sigma, ncores=10)
+  
+  Sn1 = cov(X1)
+  Sn2 = cov(X2)
+  SS = Sn1 %*% solve(Sn2)
+  
+  L=eigen(SS, only.values = TRUE)$values # slowest?
+  sum(L)/p
+})
+```
+
+### mcl.apply (see Tutorial, Week 5 and Week 7)
+
+```{r}
+library(parallel)
+```
+
+```{r}
+N = 1000
+TS = mclapply(1:N, {
+  p = 100
+  n1 = 400
+  n2 = 800
+  X1 = matrix(rnorm(p*n1), p, n1)
+  X2 = matrix(rnorm(p*n2), p, n2)
+  Sn1 = X1 %*% t(X1) / n1
+  Sn2 = X2 %*% t(X2) / n2
+  SS = Sn1 %*% solve(Sn2)
+  L=eigen(SS, only.values = TRUE)$values
+  sum(L)/p
+}, mc.cores = 10)
+```

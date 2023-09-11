@@ -1,0 +1,368 @@
+---
+title: "Workshop - Week 2"
+output:
+  html_document:
+    toc: yes
+---
+
+# Datasets
+
+## Setup
+
+Some of the data sets we will look at are stored in `idx` format, so we need to install some R libraries to read this format.
+
+```{r}
+# install.packages(c('R.utils'))
+```
+
+```{r}
+library(R.utils) # for gunzip
+```
+
+We now load these libraries.
+
+```{r}
+read_idx = function(file_name, endian = "big")
+{ if (!is.character(file_name)) stop("File_name must be character")
+  file = file(file_name, "rb")
+  # Check that the 2 first bytes contain the magic number  
+  magic_1 = readBin(file, "raw", n = 1, size = 1, endian = endian)
+  magic_2 = readBin(file, "raw", n = 1, size = 1, endian = endian)
+  if (any(as.character(c(magic_1, magic_2)) != c("00", "00")))
+    stop("The magic number doesn't match") 
+  # Detect the type of data
+  signed = TRUE
+  type = as.character(readBin(file, "raw", n = 1, size = 1, endian = endian))
+  if (type == "08")
+  { size = 1
+    signed = FALSE
+    what = "integer"
+  }
+  else if (type == "09")
+  { size = 1
+    what = "integer"
+  }
+  else if (type == "0b")
+  { size = 2
+    what = "integer"
+  }
+  else if (type =="0c")
+  { size = 4 
+    what = "integer"
+  }
+   else if (type =="0d")
+  { size = 4 
+    what = "numeric"
+  }
+  else if (type == "0e")
+  { size = 8
+    what = "double"
+  }
+  else stop("Type byte found is not supported")
+  # Get the number of dimensions
+  number_dim = as.integer(readBin(file, "raw", n = 1, size = 1, endian = endian))
+  # Get the actual dimensions
+  dims = numeric(number_dim)
+  for (i in seq_along(dims))
+  { dims[i] = readBin(file, "integer", n = 1, size = 4, endian = endian)
+  }
+  
+  cat(dims, "\n")
+  
+  # Read the data 
+  n_records = prod(dims)
+  data = readBin(file, what, n = n_records,  size = size, endian = endian, signed=signed)
+  close(file)
+  if (number_dim == 1) m = data
+  else
+  { m = array(data, dim=dims[number_dim:1])
+    m = aperm(m)
+  }
+  return(m)
+}
+```
+
+```{r}
+source('read_idx.r')
+```
+
+## MNIST
+
+This is a famous data set of handwritten digits. We will get the small version. We download the data into a local file.
+
+```{r}
+URL = "http://yann.lecun.com/exdb/mnist/"
+fn = "t10k-images-idx3-ubyte.gz"
+download.file(paste0(URL, fn), fn)
+gunzip(fn, overwrite=TRUE)
+```
+We now read it into the `train` object.
+```{r}
+train = read_idx(gsub(pattern = "\\.gz", "", fn))
+```
+
+This dataset has the following dimensions.
+```{r}
+dim(train[1,,])
+```
+
+We create some functions to view these observations.
+```{r}
+rotate = function(x) t(apply(x, 2, rev))
+
+imshow = function(x, title = "", title.color = "black") {
+  image(rotate(x), axes = FALSE,
+        col = grey(seq(0, 1, length = 256)),
+        main = list(title, col = title.color),
+        useRaster=TRUE)
+}
+```
+
+```{r fig.height=1, fig.width=1}
+imshow(train[5,,])
+```
+
+```{r}
+par(mfrow=c(4, 4), mar=c(0, 0.2, 1, 0.2))
+
+for (i in 1:16) {
+  nr <- i * 12
+  imshow(train[nr,,])
+}
+```
+
+```{r}
+28*28
+```
+
+```{r}
+x = train[1,,]
+```
+
+```{r}
+dim(x) = c(28*28)
+```
+
+```{r}
+dim(train) = c(10000, 28*28)
+```
+
+```{r}
+S = cov(train)
+```
+
+```{r}
+mu = colMeans(train)
+```
+
+```{r}
+dim(mu) = c(28, 28)
+```
+
+```{r}
+imshow(mu)
+```
+```{r}
+URL = "http://yann.lecun.com/exdb/mnist/"
+fn = "t10k-labels-idx1-ubyte.gz"
+download.file(paste0(URL, fn), fn)
+gunzip(fn, overwrite=TRUE)
+```
+We now read it into the `train` object.
+```{r}
+label = read_idx(gsub(pattern = "\\.gz", "", fn))
+```
+
+```{r}
+dim(x) = c(28, 28)
+```
+
+```{r}
+imshow(x)
+```
+
+```{r}
+label[1]
+```
+
+```{r}
+mu = colMeans(train[label==7,])
+```
+
+```{r}
+dim(mu) = c(28, 28)
+```
+
+```{r}
+imshow(mu)
+```
+```{r}
+S = cov(train[label==7,])
+```
+
+```{r}
+imshow(S)
+```
+
+
+## Fashion MNIST
+
+```{r}
+URL = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
+fn = "t10k-images-idx3-ubyte.gz"
+download.file(paste0(URL, fn), fn)
+gunzip(fn, overwrite=TRUE)
+```
+
+```{r}
+train = read_idx(gsub(pattern = "\\.gz", "", fn))
+```
+
+```{r}
+dim(train)
+```
+
+```{r}
+par(mfrow=c(4, 4), mar=c(0, 0.2, 1, 0.2))
+for (i in 1:16) {
+  nr <- i * 10
+  imshow(train[nr,,])
+}
+```
+
+```{r}
+URL = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
+fn = "t10k-labels-idx1-ubyte.gz"
+download.file(paste0(URL, fn), fn)
+gunzip(fn, overwrite=TRUE)
+```
+We now read it into the `train` object.
+```{r}
+label = read_idx(gsub(pattern = "\\.gz", "", fn))
+```
+
+
+```{r}
+dim(train) = c(10000, 28*28)
+```
+
+```{r}
+mu = colMeans(train[label==8,])
+```
+
+```{r}
+dim(mu) = c(28, 28)
+```
+
+```{r}
+imshow(mu)
+```
+
+
+# Salient features of Big Data
+
+## Heterogeneity
+
+```{r}
+set.seed(123)
+mus <- rnorm(5, mean=0, sd=10)
+sds <- rchisq(5, 1)
+```
+
+```{r}
+mus
+```
+
+```{r}
+library(MASS)
+```
+
+```{r}
+Sigma = diag(sds)
+print(Sigma)
+```
+
+```{r}
+Z = mvrnorm(n=3000, mus, Sigma)
+```
+
+```{r}
+dim(Z)
+```
+
+```{r}
+X = as.vector(mvrnorm(n=3000, mus, Sigma))
+hist(X, breaks=100)
+```
+
+```{r}
+summary(X)
+```
+
+```{r}
+mu <- mean(X)
+sd <- sd(X)
+hist(X, breaks=100, freq=FALSE, main="Bad model that doesn't capture heterogeneity")
+curve(dnorm(x, mean=mu, sd=sd), col=2, lty=2, lwd=2, add=TRUE)
+```
+
+## Noise accumulation
+
+Try to replicate the example (Fig. 1) in the "Noise Accumulation" section of the paper *Challenges of Big Data analysis* by Fan, Han, and Liu. Useful functions are `prcomp` and `mvrnorm` (in the `MASS` package).
+
+```{r}
+library(MASS)
+```
+
+We setup the number of observations `n` and the number of dimensions `p`.
+```{r}
+n <- 100
+p <- 1000
+```
+
+The first class has a zero mean.
+```{r}
+mu <- rep(0, p)
+```
+
+The second class has mean `eta`. It is a sparse mean with 0 entries everywhere except for the first 10 dimensions where the mean is 3.
+```{r}
+eta = rep(0, p)
+eta[1:10] = 3
+```
+
+```{r}
+eta
+```
+
+Sample from each class.
+```{r}
+I <- diag(2,p,p)
+X <- mvrnorm(n=n, mu, I)
+Y <- mvrnorm(n=n, eta, I)
+```
+
+Plot the first two dimensions against each other for the two classes.
+```{r}
+m = 1
+plot(X[,m], X[,m+1], bg=1, pch=19, xlim=c(-10,10), ylim=c(-10,10))
+points(Y[,m], Y[,m+1], col="red", bg="red", pch=24)
+```
+
+Stack the data into one matrix.
+```{r}
+Z <- rbind(X,Y)
+```
+
+```{r}
+dim(Z)
+```
+
+```{r}
+m <- 1000
+pcaZ <- prcomp(Z[,1:m])
+pX <- pcaZ$x[1:n,]
+pY <- pcaZ$x[(n+1):nrow(pcaZ$x),]
+plot(pX[,1], pX[,2], bg=1, pch=19, xlim=c(-10,10), ylim=c(-10,10))
+points(pY[,1], pY[,2], col=2, bg=2, pch=24)
+```

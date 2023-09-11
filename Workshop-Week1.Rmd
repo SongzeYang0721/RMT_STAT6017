@@ -1,0 +1,746 @@
+---
+title: "Workshop - Week 1"
+---
+
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\T}{\mathbf{T}}
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\C}{\mathbf{C}}
+
+```{r setup, include=FALSE}
+par(family="sans", cex=0.8, cex.axis=1.0, cex.lab=1.0, cex.main=1.1, cex.sub=1.0)
+```
+
+# Crash course
+
+This introduction workshop is inspired by code from Everitt's book *An Introduction to Applied Multivariate Analysis with R*. This is potentially a good read if you like the applied side of multivariate analysis.
+
+## Multidimensional data basics
+
+### Constructing vectors
+
+Create a vector, using the command `c()` (for concatenate)
+
+```{r}
+x = c(1, 2, 3, 4)
+x
+```
+
+```{r}
+c(1, 2, 3, 4) -> x
+x
+```
+
+Sum all elements of x:
+```{r}
+sum(x)
+```
+
+Square all elements of x:
+```{r}
+x^3
+```
+
+Get the third element of x:
+```{r}
+x[3]
+```
+
+```{r}
+result = c()
+result
+```
+
+
+Add an extra element:
+```{r}
+result = c()
+for (i in 1:10) {
+  result = c(result, i)
+}
+result
+```
+
+Create a vector using the command `seq()` (for sequence)
+```{r}
+x = seq(from=1, to=10, length.out=10)
+x
+```
+
+Obtain the length of x:
+```{r}
+length(x)
+```
+
+```{r}
+1:10
+```
+
+Create a vector using the command 'rep()' (for repeat)
+```{r}
+x = rep(0, 100)
+x
+```
+
+```{r}
+y <- rep(1:4, each = 3)
+y
+```
+
+### Constructing matrices
+
+Library for the matrix commands.
+
+```{r}
+library(Matrix)
+```
+
+Construct a matrix.
+
+```{r}
+A = matrix(c(1, 2, 3, 4, 5, 6), ncol=2, byrow=TRUE)
+A
+```
+
+Access elements.
+
+```{r}
+A[,2]
+```
+
+Access rows.
+
+```{r}
+A[1,]
+```
+
+Access columns.
+
+```{r}
+A[,1]
+```
+
+Construct by column first.
+
+```{r}
+B = matrix(1:9, byrow=F, ncol=3)
+print(B)
+```
+
+The `diag` function has multiple uses.
+Construct a diagonal matrix from a vector.
+
+```{r}
+D = diag(rep(2,4))
+D
+```
+
+Construct an identity matrix of a certain size.
+
+```{r}
+I = diag(4)
+I
+```
+
+Extract or change the diagonal of a matrix.
+
+```{r}
+print(A)
+```
+
+```{r}
+cat("1\t2\n")
+cat("2\t3\n")
+```
+
+```{r}
+B
+```
+
+
+```{r}
+diag(B) = 1
+```
+
+```{r}
+B
+```
+
+Construct a matrix of all ones, two possible approaches:
+
+```{r}
+ONES = matrix(rep(1, 9), ncol=3)
+ONES
+```
+
+```{r}
+ONES = matrix(1, nrow=3, ncol=3)
+ONES
+```
+
+```{r}
+ONES
+```
+
+
+### Basic operations
+
+Create some vectors and matrices.
+
+```{r}
+x = c(1, 2, 3)
+y = c(4, 5, 6)
+z = seq(1, 10, by=1)
+B = matrix(1:6, 2, 3)
+```
+
+```{r}
+y
+```
+
+
+```{r}
+class(y)
+```
+
+To make sure that R respects dimensions, turn them into matrices.
+
+```{r}
+x = as.matrix(x)
+y = as.matrix(y)
+```
+
+```{r}
+class(x)
+```
+
+```{r}
+dim(x)
+```
+
+```{r}
+x
+```
+
+
+#### Basic operations
+
+Transpose operations.
+
+```{r}
+t(A)
+t(B)
+t(D)
+```
+
+Element-wise operations on matrices.
+
+```{r}
+A
+```
+
+```{r}
+B
+```
+
+```{r}
+A %*% B
+```
+
+```{r}
+A+t(B)
+A-t(B)
+A*t(B) # CAUTION!!! This is not matrix multiplication.
+A/t(B)
+A^t(B)
+```
+
+Element-wise operations on vectors.
+
+```{r}
+x+y
+x-y
+x*y
+x/y
+y^x
+```
+
+#### Matrix and vector operations
+
+This would give an error message: non-conformable.
+
+```{r}
+dim(A)
+```
+
+```{r}
+dim(B)
+```
+
+```{r}
+A %*% B
+```
+
+Check the matrix dimension.
+
+```{r}
+dim(A)
+```
+
+```{r}
+dim(t(B))
+```
+
+A correct calculation is obtained by transposing the matrix $B$ so that it has the correct dimensions to be multiplied with $A$.
+
+```{r}
+A %*% B -> C
+print(C)
+```
+
+Here are some alternatives that also work:
+
+```{r}
+A %*% B
+
+B %*% A
+
+B %*% A
+
+x %*% t(y)
+
+t(x) %*% y
+
+# x %*% A
+```
+
+Multiplies each column of B by a number by using the diagonal matrix $D$.
+
+```{r}
+D = diag(c(1,2,3))
+D
+```
+
+```{r}
+B
+```
+
+
+```{r}
+B %*% D
+```
+
+Multiplies each row of B by a number by using a diagonal matrix.
+
+```{r}
+diag(c(3,4)) %*% B
+```
+
+### Other operations
+
+Determinant of a matrix.
+
+```{r}
+D
+```
+
+```{r}
+det(D)
+```
+
+```{r}
+det(ONES)
+```
+
+Inverse of a matrix $A x = b$ $x = A^{-1} b$
+
+```{r}
+Di = solve(D)
+Di
+```
+
+$ A A^{-1} = I$
+
+```{r}
+D %*% Di
+```
+
+```{r}
+Di %*% D
+```
+
+You can create an almost-singular matrix by choosing a small variance noise matrix `N` and see what happens with the inverse of `(1+N)`. This is to show that very small numerical errors can make it very hard to invert a matrix.
+
+```{r}
+set.seed(112312)
+N<-matrix(rnorm(9, sd=10^-1),3,3)
+print(N)
+```
+
+```{r}
+ONES
+```
+
+```{r}
+Ii = solve(ONES+N)
+Ii
+```
+
+```{r}
+(ONES+N) %*% Ii
+```
+
+```{r}
+Ii%*%(I+N)
+```
+
+## Plotting multidimensional data
+
+Visualisation is very important when exploring a new data set. Here are some useful ways to look at multi-dimensional data.
+
+### Box plot
+
+```{r}
+mtcars
+```
+
+Standard boxplot.
+
+```{r}
+boxplot(mtcars[,1:7], main="Boxplot of car data")
+```
+
+### Scatter plot
+
+Bivariate scatter plot.
+```{r}
+plot(mtcars$hp, mtcars$mpg)
+```
+
+Add labels along the axes
+```{r}
+plot(mtcars$hp, mtcars$mpg, xlab="Horse power", 
+     ylab="Miles per gallon", main="Cars data")
+```
+
+All possible bivariate scatter plots.
+```{r}
+pairs(mtcars[,1:7], panel=panel.smooth,
+      main="Scatterplot matrix of car data")
+```
+
+We can make a nicer version but we need to create two helper functions first. This one puts histograms on the diagonal.
+```{r}
+panel.hist <- function(x, ...) {
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks; nB <- length(breaks)
+  y <- h$counts; y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, 
+       col = "cyan", ...)
+}
+```
+
+This one puts (absolute) correlations on the upper panels, with size proportional to the correlations.
+```{r}
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...) {
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+```
+
+Now let's do it.
+```{r}
+pairs(mtcars[,1:7], panel=panel.smooth, 
+      upper.panel=panel.cor, diag.panel=panel.hist)
+```
+
+### Bubble plots
+
+```{r}
+plot(mtcars$hp, mtcars$mpg, pch = 20, 
+     xlab = "Horse power", ylab = "Miles per Gallon", 
+     ylim=c(0,40))
+```
+We can add a third variable by using circles.
+```{r}
+plot(mtcars$hp, mtcars$mpg, pch = 20, 
+     xlab = "Horse power", ylab = "Miles per Gallon", 
+     ylim=c(0,40))
+symbols(mtcars$hp, mtcars$mpg, circles = mtcars$cyl, 
+        add = TRUE)
+title("Bubble plot: The radius of the circle 
+      indicates weight")
+```
+
+We can add even more variables with rectangles and colors:
+```{r}
+plot(mtcars$hp, mtcars$mpg, pch = 20, 
+     xlab = "Horse power", ylab = "Miles per Gallon", 
+     ylim=c(0,40))
+symbols(mtcars$hp, mtcars$mpg, 
+        rectangles = cbind(mtcars$wt,mtcars$drat), 
+        fg=mtcars$cyl, lwd=2, add = TRUE)
+title("Width: weight, height: rear axel ratio")
+legend("topright", c("4 cyl", "6 cyl", "8 cyl"), 
+       lty=1, col=c(4,6,8), lwd=2)
+```
+
+### Star plots
+
+```{r}
+stars(mtcars[, 1:7], key.loc = c(14, 2), scale=T,
+      main = "Motor Trend Cars")
+```
+
+```{r}
+stars(mtcars[, 1:7], key.loc = c(14, 2), scale=T,
+      main = "Motor Trend Cars", full = FALSE)
+```
+
+Better approach, segment plot with colors.
+```{r}
+palette(rainbow(12, s = 0.6, v = 0.75))
+stars(mtcars[, 1:7], key.loc = c(14,2), scale=T, 
+      main = "Motor Trend Cars", 
+      draw.segment=TRUE)
+# with more control over position of labels:
+loc <- stars(mtcars[, 1:7], key.loc = c(14,2), scale=T, 
+       main = "Motor Trend Cars", 
+       draw.segment=TRUE)
+
+loc <- stars(mtcars[, 1:7], key.loc = c(14,2), scale=T, 
+      labels=NULL, main = "Motor Trend Cars", 
+      draw.segment=TRUE)
+# loc contains the centers of the segment plots
+# write name of car in the middle of each segment plot
+text(loc[,1],loc[,2]-.8, 
+     row.names(mtcars), 
+     col = "black", cex = 0.6, xpd = TRUE)
+palette("default") # set colors back to default
+```
+
+### Parallel coordinates plot
+
+This is one of my favourites for high-dimensional data.
+
+```{r}
+library(MASS)
+```
+
+```{r}
+parcoord(mtcars[,1:7])
+```
+
+Color can help.
+
+```{r}
+parcoord(mtcars[,1:7], col=mtcars$cyl)
+```
+
+## Random vectors and matrices
+
+### Random matrix
+
+```{r}
+rnorm(6)
+```
+
+
+```{r}
+# set.seed(12312)
+x = matrix(rnorm(6), ncol=2)
+x
+```
+
+Notice that `mean(x)` DOES NOT produce what we want.
+```{r}
+mean(x)
+```
+
+```{r}
+dim(x)
+```
+
+```{r}
+n = dim(x)[1]
+n
+```
+
+```{r}
+n = nrow(x)
+n
+```
+
+```{r}
+p = ncol(x)
+p
+```
+
+Empirical mean.
+```{r}
+n = nrow(x)
+ones = matrix(rep(1,n), ncol=1)
+mu = t(x) %*% ones / n
+print(mu)
+```
+
+```{r}
+x
+```
+
+We can also use the apply function here.
+```{r}
+apply(x, 2, mean)
+```
+
+```{r}
+apply(x, 1, mean)
+```
+
+```{r}
+colMeans(x)
+```
+
+```{r}
+rowMeans(x)
+```
+
+
+### Variance and standard deviation of a vector
+
+```{r}
+x
+var(x[,1])
+var(x[,2])
+
+sd(x[,1])
+sd(x[,2])
+
+# covariance 
+var(x[,1], x[,2])
+```
+```{r}
+x
+```
+
+
+Variance-covariance matrix.
+
+```{r}
+var(x)
+```
+
+Correlation matrix.
+
+```{r}
+cor(x)
+```
+
+### Sample variance-covariance
+
+3x3 matrix of 1s.
+
+```{r}
+ones
+```
+
+
+```{r}
+ONES <- ones %*% t(ones)
+ONES
+```
+
+Identity matrix.
+
+```{r}
+diag(3)
+```
+
+Matrix computation of S (unbiased)
+
+```{r}
+(1/(n-1)) * t(x) %*% (diag(3)-(1/n)*ones %*% t(ones)) %*% x
+```
+
+Produces the same result
+
+```{r}
+cov(x)
+```
+
+# Salient features of Big Data
+
+## Outliers in higher dimensions are not obvious
+
+### Outliers in univariate case
+
+```{r}
+set.seed(123)
+dat <- matrix(rnorm(5*100),100,5)
+summary(dat)
+dat[23,4] <- dat[23,4] * 10
+summary(dat)
+pairs(dat)
+```
+
+Extract its location
+```{r}
+which.min(dat[,4])
+```
+
+### Multivariate outliers
+
+```{r}
+load(file = "simpleExample.rda")
+```
+
+There are no clear univariate outliers here
+```{r}
+par(mfrow=c(1,4))
+plot(dat, xlim = c(-5,5), ylim = c(-5,5))
+barplot(dat[,1], main="x values")
+barplot(dat[,2], main="y values")
+```
+Using Mahalanobis distance
+```{r}
+d <- mahalanobis(dat, colMeans(dat), cov(dat))
+barplot(d, main="Mahalanobis")
+which.max(d)
+```
+
+Create chi-squared QQ-plot.
+```{r}
+par(mfrow=c(1,1))
+qqplot(qchisq(ppoints(301), df = 2), d,
+       main = expression("Q-Q plot for" ~~ {chi^2}[nu == 2]))
+```
+
+Now the outlier is clearly visible.
+```{r}
+par(mfrow = c(1,1))
+plot(dat, xlim=c(-5,5), ylim=c(-5,5))
+points(dat[301,1],dat[301,2],col="red")
+```
+
+# Distances between vectors in high dimension
+
+```{r}
+p = 50
+n = 100
+X = matrix(runif(n*p), nrow=n, ncol=p)
+d = c()
+for (i in 1:n) {
+  for (j in i:n) {
+    d = c(d, norm(X[i,]-X[j,], "2"))
+  }
+}
+hist(d, 50)
+```

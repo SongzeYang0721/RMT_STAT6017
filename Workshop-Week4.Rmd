@@ -1,0 +1,302 @@
+---
+title: "Workshop - Week 4"
+output:
+  html_document:
+    toc: yes
+---
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\T}{\mathbf{T}}
+\newcommand{\S}{\mathbf{S}}
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\C}{\mathbf{C}}
+
+```{r setup, include=FALSE}
+par(family="sans", cex=0.8, cex.axis=1.0, cex.lab=1.0, cex.main=1.1, cex.sub=1.0)
+```
+
+# Empirical Spectral Distributions
+
+## Visualising the ESD
+
+Sample a covariance based on $\mathbb{S}_n = \frac{1}{n-1} \mathbb{X} \mathbb{X}^T$ where $\mathbb{X}$ is a $p \times n$ matrix with Gaussian entries with mean zero and variance 1. This gives a matrix $\mathbb{S}_n$ of size $p\times p$.
+
+```{r}
+p = 50
+n = 500
+
+# X = matrix(rnorm(p*n), p, n)
+# Sn = X %*% t(X) / (n-1)
+
+X = matrix(rnorm(p*n), n, p)
+Sn = cov(X)
+
+dim(Sn)
+```
+
+Calculate the ratio $y=p/n$
+```{r}
+p/n
+```
+
+Calculate the eigenvalues.
+
+```{r}
+L = eigen(Sn, only.values = TRUE)$values
+```
+
+We have $p$ eigenvalues.
+
+```{r}
+length(L)
+```
+
+Print out the eigenvalues, notice that are all real numbers.
+```{r}
+min(L)
+```
+
+```{r}
+max(L)
+```
+
+Note that our matrix $\mathbb{S}_n$ is special because a standard $p \times p$ matrix with Gaussian entries would have complex eigenvalues.
+
+```{r}
+Q = matrix(rnorm(p*p), p, p)
+dim(Q)
+```
+```{r}
+eigen(Q)$values
+```
+
+It's pretty hard to draw the empirical spectral distribution $$F^{\mathbb{S}_n} (x) = \frac{1}{p} \sum_{i=1}^p \delta_{\lambda_k}(x).$$ One way is to think of this function as a plot where you have a horizontal line at every eigenvalue (of height $1/p$). Draw a horizontal line at every eigenvalue. Note that setting the height of this line to $1/p$ is tricky and can't be done with the `abline` function.
+```{r}
+p = 25
+n = 500
+
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / (n-1)
+
+L=eigen(Sn)$values
+
+plot(c(0,1.5*max(L)), c(0,1), type='n', xlab='x', ylab='', main="Eigenvalues")
+
+abline(v=L, col='green4')
+```
+
+# Linear spectral statistics
+
+Remember in the lecture we didn't deal with the ESD $F^{\mathbb{S}_n}$ directly, but instead we considered $$F^{\mathbb{S}_n}({\varphi}) := \int_a^b \varphi(x) F^{\mathbb{S}_n}(dx),$$ for some choice of $\varphi$.
+
+$$\int \varphi(x) F(x) dx$$
+
+I gave two examples: $\varphi(x) = \log(x)$ for the generalised variance and $\varphi_z(x) = \frac{1}{x-z}$ for the Stieltjes transform (which depends on another variable $z$).
+
+## Generalised variance
+
+We can generate one realisation of the sample covariance matrix $\mathbb{S}_n$.
+
+```{r}
+p = 200
+n = 800
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / (n-1)
+```
+
+Linear spectral statistics are function of the eigenvalues of the sample covariance matrix $\mathbb{S}_n$. They are easy to obtain by using the `eigen` function in R. For example, we can calculate the *generalised variance* statistics.
+$$
+\text{GV} = \frac{1}{p} \log |\mathbb{S_n}| = \frac{1}{p} \log \left(\Pi_{i=1}^p \lambda_i\right) = \frac{1}{p} \sum_{i=1}^p \log(\lambda_i) = \int \log(x) F^{\mathbb{S}_n}(x)\,\textrm{dx}= \int \log(x) \left(\frac{1}{p} \sum_{i=1}^p \delta_{\lambda_k}(x)\right)\,\textrm{dx}
+$$
+```{r}
+L = eigen(Sn)$values
+GV = sum(log(L))/p
+```
+
+Here `GV` is a (random) number, we need to perform lots of simulation to understand the distribution of this test statistic.
+
+```{r}
+GV
+```
+
+## In an easy case
+
+Consider the test statistic
+$$
+T_n = \frac{1}{p}\sum_{k=1}^p \lambda_k = \int x \left(\frac{1}{p} \sum_{i=1}^p \delta_{\lambda_k}(x)\right)\,\textrm{dx} = \int x F^{\mathbb{S}_n}(x)\,\textrm{dx}
+$$
+Here that the test function $\varphi(x) = x$.
+
+Perform `N` simulations and collect all the test statistics.
+```{r}
+N = 1000
+
+p = 100
+n = 400
+
+TS = numeric(N)
+
+for (i in 1:N) { # repeat sim
+  X = matrix(rnorm(p*n), p, n)
+  Sn = X %*% t(X) / (n-1)
+  L = eigen(Sn, only.values = TRUE)$values
+  TS[i] = sum(L)/p
+}
+```
+
+```{r}
+hist(TS, breaks=p/3, xlim=c(0.95*min(TS),1.05*max(TS)), freq=FALSE, col='gray86', main='')
+```
+Alternative approach. Perform `N` simulations and collect all the test statistics.
+```{r}
+N = 1000
+
+p = 100
+n = 400
+
+TS = replicate(N, {
+  X = matrix(rnorm(p*n), p, n)
+  Sn = X %*% t(X) / (n-1)
+  L = eigen(Sn, only.values = TRUE)$values
+  sum(L)/p
+})
+```
+
+```{r}
+hist(TS, breaks=p/3, xlim=c(0.95*min(TS),1.05*max(TS)), freq=FALSE, col='gray86', main='')
+```
+## Empirical CDF
+
+Generate some data and calculate eigenvalues.
+```{r}
+p = 200
+n = 800
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / (n-1)
+L=eigen(Sn)$values
+```
+
+Taking $\varphi_z(x) = \mathbb{1}(x \le z)$ as the ($z$ dependent) test function then I can get the empirical CDF.
+```{r}
+F = Vectorize(function(z) {
+  total = 0.
+  for (i in 1:p) {
+    if (L[i] <= z) {
+      total = total + 1
+    }
+  }
+  return (total/p)
+})
+```
+
+```{r}
+z = seq(0, 1, 0.1)
+z
+```
+
+```{r}
+F(z)
+```
+
+And now plot it.
+
+```{r}
+plot(F, from=0., to=2*max(L), main="Empirical CDF")
+```
+
+```{r}
+h = ecdf(L)
+plot(h, xlim=c(0,4.5))
+```
+
+# Marcenko-Pastur distribution
+
+## Density
+
+We can implement the density function.
+
+```{r}
+dmp = function(x, y, sigma=1) {
+  a = (1-sqrt(y))^2
+  b = (1+sqrt(y))^2
+  suppressWarnings(ifelse((x <= a) | (x >= b), 0, 
+                          sqrt((x - a) * (b - x))/(2 * pi * sigma * x * y)))
+}
+```
+
+Plot curves for various valued of $y$.
+```{r message=FALSE, warning=FALSE}
+curve(dmp(x, y=1/8), from = 0, to = 3, lty=1, ylim=c(0,1.5))
+curve(dmp(x, y=1/4), from = 0, to = 3, lty=2, add=TRUE)
+curve(dmp(x, y=1/2), from = 0, to = 3, lty=3, add=TRUE)
+curve(dmp(x, y=3/4), from = 0, to = 3, lty=4, add=TRUE)
+```
+
+## Eigenvalues of sample covariance matrix
+
+Sample a covariance based on $\mathbb{S}_n = \frac{1}{n} \mathbb{X} \mathbb{X}^T$ where $\mathbb{X}$ is a $p \times n$ matrix with Gaussian entries with mean zero and variance 1. This gives a matrix $\mathbb{S}_n$ of size $p\times p$.
+
+```{r}
+p = 100
+n = 500
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / n
+dim(Sn)
+```
+
+Calculate the eigenvalues.
+```{r}
+L=eigen(Sn, only.values = TRUE)$values
+```
+
+```{r}
+y = 0.2 # p / n
+n = 1000
+p = as.integer(y * n)
+print(p * p)
+```
+
+Plot a histogram of the eigenvalues against the MP density.
+```{r}
+y = 0.1 # p / n
+n = 1000
+p = as.integer(y * n)
+
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / (n-1)
+
+L=eigen(Sn, only.values = TRUE)$values
+
+hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, main='', col='gray86')
+
+curve(dmp(x, y=p/n), from = 0, to = 1.2*max(L), lty=1, lw=2, col='green4', add=TRUE)
+```
+```{r}
+y = 0.3 # p / n
+n = 5000
+p = as.integer(y * n)
+
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / (n-1)
+
+L=eigen(Sn, only.values = TRUE)$values
+
+hist(L, breaks=50, xlim=c(0,1.2*max(L)), freq=FALSE, main='', col='gray86')
+
+curve(dmp(x, y=p/n), from = 0, to = 1.2*max(L), lty=1, lw=2, col='green4', add=TRUE)
+```
+```{r}
+y = 0.7 # p / n
+n = 5000
+p = as.integer(y * n)
+
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / (n-1)
+
+L = eigen(Sn, only.values = TRUE)$values
+
+f = density(L, kernel = "cosine", bw = 0.02)
+
+plot(f)
+curve(dmp(x, y=p/n), from = 0, to = 1.2*max(L), lty=1, lw=2, col='green4', add=TRUE)
+```

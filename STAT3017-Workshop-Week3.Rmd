@@ -1,0 +1,566 @@
+---
+title: "Workshop - Week 3"
+output:
+  html_document:
+    toc: yes
+---
+
+# Multivariate normals
+
+First, we load some packages.
+```{r}
+library(Matrix)   # matrix operations
+library(mvtnorm)
+```
+
+```{r}
+library(MASS)     # Multivariate Normal Distribution
+```
+
+```{r}
+library(mvtnorm)
+```
+
+```{r}
+library(mvnfast)
+```
+
+```{r}
+install.packages(c('mvtnorm'))
+```
+
+## Generating random samples
+
+```{r}
+rnorm(3)
+```
+
+$$
+N(0, I_p)
+$$
+Generate a Multivariate Normal Sample as a linear combination of iid standard normal rvs.
+```{r}
+N = matrix(rnorm(5*2), 2, 5) # 5x2 iid N(0,1) rvs
+N
+```
+
+```{r}
+A = matrix(c(1,1,.5,.1), 2, 2)   # 2x2 matrix of coefficients
+A
+```
+
+```{r}
+X = A %*% N                 # 5x2 linear combination
+X
+```
+
+We can also generate a Multivariate Normal Sample using the R function `mvrnorm`.
+
+```{r}
+Sigma = matrix(c(10,4,4,2), 2, 2)
+Sigma
+```
+
+
+```{r}
+mvrnorm(n=1, c(0,0), Sigma) # sample 1x2 with mean [0,0]
+```
+
+```{r}
+mvrnorm(n=5, c(0,0), Sigma) # sample 5x2 with mean [0,0]
+```
+
+```{r}
+X = mvrnorm(n=10000, c(-100,100), Sigma) # sample 5x2 with mean [-100,100]
+```
+
+```{r}
+colMeans(X)
+```
+
+This is using the `mvtnorm` package.
+
+```{r}
+library(mvtnorm)
+```
+
+```{r}
+rmvnorm(n=5, sigma=Sigma)
+```
+
+```{r}
+library(mvnfast)
+```
+
+```{r}
+X = rmvn(10*1000, c(0,0), sigma=Sigma, ncores=10)
+```
+
+## Calculating the variance
+
+```{r}
+Sigma # populuation covariance
+```
+
+Here, `Sigma` is the population variance.
+```{r}
+X = mvrnorm(n=10000, rep(0, 2), Sigma)
+S = var(X)
+```
+
+```{r}
+S
+```
+
+Here, `S` is the sample covariance.
+```{r}
+X = mvrnorm(n=1000, rep(0, 2), S, empirical = TRUE)
+var(X)
+```
+
+## Calculating correlation and covariance matrices
+
+We calculate the correlation matrices for `N` and `X`.
+```{r}
+cor(N)
+```
+
+```{r}
+cor(X)
+```
+
+We can calculate the variance-covariance matrices for `N` and `X`.
+```{r}
+cov(X)
+cor(X)
+```
+
+These give both the same results as the function `cov`.
+```{r}
+var(X)
+```
+
+## Sampling a multivariate normal distribution with given covariance
+
+Setup the (population) covariance matrices.
+```{r}
+Sigma = matrix(c(10,4,4,2), 2, 2)
+Sigma
+```
+
+```{r}
+I = diag(c(1,1)) # identity matrix
+I
+```
+
+Generate two large samples with these variances.
+```{r}
+N = mvrnorm(n=10000, c(0,0), I)
+X = mvrnorm(n=10000, c(0,0), Sigma)
+```
+
+Perform the spectral decomposition and obtain the eigenvectors and eigenvalues.
+
+```{r}
+eigen(Sigma)
+```
+
+```{r}
+L = eigen(Sigma, only.values=TRUE)$values
+L
+```
+
+```{r}
+e = eigen(Sigma)
+P = e$vectors
+L = e$values
+```
+
+```{r}
+P
+```
+
+Generate the *inverse square-root matrix* using $A^k = P D^{k} P^{T}$ for $k \in \mathbb{Z}$ where $D$ is a diagonal matrix. I want to calculate
+$$
+A^{-1/2} = P D^{-1/2} P^T
+$$
+
+$$
+D = \text{diag}(1/\sqrt{\lambda_1}, \ldots, 1/\sqrt{\lambda_n})
+$$
+$$
+D = \text{diag}({\lambda_1}^{-1/2}, \ldots, {\lambda_n}^{-1/2})
+$$
+```{r}
+L
+```
+
+```{r}
+1/sqrt(L)
+```
+
+```{r}
+D = diag(sqrt(1/L))
+D
+```
+
+```{r}
+Sigma
+```
+
+This is $\Sigma^{-1/2}$:
+```{r}
+Sm = P %*% D %*% t(P)
+Sm
+```
+
+Using the same technique generate the *square-root matrix*.
+$$
+D^{1/2} = 
+\begin{pmatrix}
+\sqrt{\lambda_1} & 0 \\
+0 & \sqrt{\lambda_2}. \\
+\end{pmatrix}
+$$
+Giving
+$$
+\Sigma^{1/2}.
+$$
+```{r}
+Sp = P %*% diag(sqrt(L)) %*% t(P)
+Sp
+```
+
+$$
+X \sim N_p(0, \Sigma) \Rightarrow N_p(0,I)
+$$
+
+$$
+\Sigma^{-1/2} X \sim N_p(0,I)
+$$
+Reminder: If $X \sim N(0,\sigma^2)$ then $\frac{1}{\sigma} X \sim N(0,1)$
+
+Generate a vector of iid $N(0,1)$ rvs.
+```{r}
+Z = t( Sm %*% t(X) )
+```
+
+```{r}
+dim(Z)
+```
+
+```{r}
+var(Z)
+```
+$$
+N_p(0, \Sigma) \Leftarrow N \sim N_p(0,I)
+$$
+$$
+\Sigma^{1/2} N \sim N_p(0,\Sigma)
+$$
+$$
+Z \sim N(0,1) \\
+\sigma Z \sim N(0,\sigma^2)
+$$
+Generate a MVN rv with variance `Sigma`.
+
+```{r}
+X1 = t( Sp %*% t(N) )
+```
+
+```{r}
+dim(X1)
+```
+
+$$ (A B)^T = B^T A^T $$
+
+```{r}
+X1 = N %*% Sp
+```
+
+```{r}
+dim(X1)
+```
+
+Check the covariances.
+```{r}
+var(Z)
+var(X1)
+Sigma
+```
+
+```{r}
+#N = mvrnorm(n=10000, c(0,0), I)
+N = matrix(rnorm(10000 * 2), 10000, 2)
+```
+
+```{r}
+dim(N)
+```
+
+```{r}
+X1 = N %*% Sp
+```
+
+```{r}
+cov(X1)
+```
+
+
+## Densities
+
+We can use the package `mvtnorm`. If you don't have it, you can install it with `install.packages('mvtnorm')` and then load it.
+
+```{r}
+library(mvtnorm)
+```
+
+```{r}
+dmvnorm(x=c(0,0))
+```
+
+```{r}
+pi^{-d/2}
+```
+
+```{r}
+dmvnorm(x=c(0,0), mean=c(1,1))
+```
+
+```{r}
+Sigma = matrix(c(4,2,2,3), ncol=2)
+X = rmvnorm(n=500, mean=c(1,2), sigma=Sigma)
+```
+
+```{r}
+colMeans(X)
+```
+
+```{r}
+cov(X)
+```
+
+```{r}
+Sigma = matrix(c(4,2,2,3), ncol=2)
+Sigma
+```
+
+```{r}
+X = rmvnorm(n=500, mean=c(1,2), sigma=Sigma, method="chol")
+par(pty = "s")
+plot(X)
+```
+
+```{r}
+mu = c(5, 10)
+P = cov2cor(V = Sigma)
+P
+```
+
+Explicit calculation at mean.
+```{r}
+dmvnorm(x = mu, mean = mu, sigma = Sigma)
+```
+
+Generate points where we shall evaluate.
+```{r}
+x1 = seq(from = mu[1]-5, to = mu[1]+5, length=50)
+x2 = seq(from = mu[2]-5, to = mu[2]+5, length=50)
+all.x = expand.grid(x1, x2)
+```
+
+```{r}
+fx = matrix(data = dmvnorm(x = all.x, mean = mu, sigma = Sigma), nrow = length(x1), ncol = length(x2), byrow = FALSE)
+```
+
+```{r}
+persp(x = x1, y = x2, z = fx, col = "white", xlab = "x1", ylab = "x2", zlab = "f(x)", phi = 70)
+```
+Contour plot - purposely made x and y-axes the same length so that one can judge variability.
+```{r}
+par(pty = "s")
+contour(x = x1, y = x2, z = fx, main = "Multivariate normal contour plot", 
+        xlab = expression(x[1]), ylab = expression(x[2]))
+```
+
+Two variables - Show eigenvectors on contour plot.
+```{r}
+mu=c(5, 10)
+sigma=matrix(data = c(1, 0.5, 0.5, 1.25), nrow = 2, ncol = 2, byrow = TRUE)
+
+x1=seq(from = 0, to = 15, by = 0.1)
+x2=seq(from = 0, to = 15, by = 0.1)
+all.x=expand.grid(x1, x2)
+fx = matrix(data = dmvnorm(x = all.x, mean = mu, sigma = sigma), nrow = length(x1), ncol = length(x2), byrow = FALSE)
+
+par(pty = "s")
+contour(x = x1, y = x2, z = fx, main = expression(paste("Multivariate normal contour plot with eigenvectors for ", Sigma)), xlab = expression(x[1]), ylab = expression(x[2]), levels = c(0.01, 0.001), xlim=c(-5, 15))
+  
+abline(h = seq(from = -10, to = 30, by = 10), lty = "dotted", col = "lightgray")
+abline(v = seq(from = -10, to = 30, by = 10), lty = "dotted", col = "lightgray")
+
+abline(h = 0, lwd = 2)
+abline(v = 0, lwd = 2)
+  
+save.eig=eigen(sigma)
+save.eig$values
+save.eig$vectors
+
+arrows(x0 = 0, y0 = 0, x1 = 3*save.eig$vectors[1,1], y1 = 3*save.eig$vectors[2,1], col = "red", lty = "solid",angle=10,lwd=2)
+
+arrows(x0 = 0, y0 = 0, x1 = 3*save.eig$vectors[1,2], y1 = 3*save.eig$vectors[2,2], col = "red", lty = "solid",angle=10,lwd=2)
+```
+
+# Eigenvalues of sample covariance matrix
+
+Sample a covariance based on $\mathbb{S}_n = \frac{1}{n-1} \mathbb{X} \mathbb{X}^T$ where $\mathbb{X}$ is a $p \times n$ matrix with Gaussian entries with mean zero and variance 1. This gives a matrix $\mathbb{S}_n$ of size $p\times p$.
+
+## Case $p$=50 and $n$=500
+
+$$
+\Sigma = I_p
+$$
+
+```{r}
+p = 50
+n = 500
+X = matrix(rnorm(p*n), p, n)
+dim(X)
+```
+
+```{r}
+y = p / n
+y
+```
+
+```{r}
+Sn = X %*% t(X) / (n-1)
+dim(Sn)
+```
+
+```{r}
+Sn = cov(X)
+```
+
+Calculate the eigenvalues.
+```{r}
+e=eigen(Sn)
+L=e$values
+```
+
+Plot a histogram of the eigenvalues.
+```{r}
+hist(L, breaks=50, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
+```
+
+## Case $p$=250 and $n$=500
+
+```{r}
+p = 250
+n = 500
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / n
+dim(Sn)
+```
+
+```{r}
+p/n
+```
+
+Calculate the eigenvalues.
+```{r}
+e=eigen(Sn)
+L=eigen(Sn)$values
+```
+
+Plot a histogram of the eigenvalues.
+```{r}
+hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
+```
+```{r}
+p = 250
+n = 500
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / (n - 1)
+L = eigen(Sn, only.values=TRUE)$values
+hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
+```
+
+## Case $p$=500 and $n$=1000
+
+```{r}
+p = 500
+n = 1000
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / n
+dim(Sn)
+```
+
+```{r}
+p/n
+```
+
+Calculate the eigenvalues.
+```{r}
+e=eigen(Sn)
+L=e$values
+```
+
+Plot a histogram of the eigenvalues.
+```{r}
+hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
+```
+
+```{r}
+y = 0.5
+n = 5000
+p = as.integer(y * n)
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / (n - 1)
+L = eigen(Sn, only.values=TRUE)$values
+hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
+```
+## Case $p$=250 and $n$=1000
+
+```{r}
+p = 250
+n = 1000
+X = matrix(rnorm(p*n), p, n)
+Sn = X %*% t(X) / n
+dim(Sn)
+```
+
+```{r}
+p/n
+```
+
+Calculate the eigenvalues.
+```{r}
+e=eigen(Sn)
+L=e$values
+```
+
+Plot a histogram of the eigenvalues.
+```{r}
+hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
+```
+
+## Conclusion
+
+Do you notice something about the shape of the histograms as $p$ and $n$ change? Go back and think about what the ratio $p/n$ is for each plot. What do you think will happen to the histogram as $n \to \infty$ and $p \to \infty$ while keeping $0 < p/n < 1$.
+
+```{r}
+p = 5
+2 * diag(p)
+```
+
+```{r}
+p = 500
+n = 1000
+y = p/n
+sigma = 4
+X = rmvnorm(n=n, mean=rep(0,p), sigma=sigma * diag(p))
+Sn = cov(X)
+L = eigen(Sn, only.values=TRUE)$values
+hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
+```
