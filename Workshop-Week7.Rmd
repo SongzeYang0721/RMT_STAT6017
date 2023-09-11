@@ -1,0 +1,624 @@
+---
+title: "Workshop - Week 7"
+---
+
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\T}{\mathbf{T}}
+\newcommand{\S}{\mathbf{S}}
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\C}{\mathbf{C}}
+
+- Wishart Distribution
+- Sample Generalised Variance
+- Dist of Sample GV using classic approach
+- Dist of Sample GV using new high-dimensional approach
+
+# Wishart Distribution
+
+## Joint distribution of eigenvalues
+
+First we create a function to calculate the eigenvalues of a matrix `x`. We need to `sample` as `eigen` always returns the eigenvalues in *decreasing* order. If you don't randomly shuffle them then you don't see any interesting patterns.
+
+```{r}
+eigenvalues = function(x) {
+  sample(eigen(x, only.values=T)$values, nrow(x))
+}
+```
+
+Define our covariance matrix $\Sigma$.
+```{r}
+Sigma = matrix(c(1,1/3,1/3,1), ncol=2)
+Sigma
+```
+
+The function `rWishart` generates $n$ random matrices, distributed according to the Wishart distribution with parameters $\Sigma$ and $N=10$ degrees of freedom $W_p(N, \Sigma)$. It returns a numeric array, say `R`, of dimension $p \times p \times n$, where each `R[,,i]` is a positive definite matrix, a realization of the Wishart distribution $W_p(N, \Sigma)$.
+```{r}
+A = rWishart(3, 10, Sigma)
+A
+```
+```{r}
+A[,,3]
+```
+
+
+```{r}
+eigenvalues(A[,,3])
+```
+
+Now we sample $n=10^4$ Wishart matrices with covariance matrix $\Sigma$ and calculate the eigenvalues. We use the function `apply` to apply the `eigenvalues` function (above) to the 3rd margin of the numeric array returned by `rWishart`.
+```{r}
+Ls = apply(rWishart(10^4, 10, Sigma), 3, eigenvalues)
+```
+
+```{r}
+dim(Ls)
+```
+
+We can now plot the histograms of the marginals.
+```{r}
+par(mfrow=c(1,2)) -> opar
+
+hist(Ls[1,], 50)
+hist(Ls[2,], 50)
+
+title(main="Histograms of first and second eigenvalue", outer=T, line=1)
+
+par(opar)
+```
+
+Scatter plot of the eigenvalues.
+```{r}
+plot(Ls[1,], Ls[2,], xlim=c(0,35), ylim=c(0,35))
+```
+
+Or if we are feeling fancy, generate a nice 3D plot using a kernel density estimate.
+```{r, message=FALSE, warning=FALSE}
+require(MASS)
+
+f = kde2d(Ls[1,], Ls[2,], n=60, lims=c(-1,35,-1,35))
+
+# set margins
+par(mai=c(0.1,0.1,0.1,0.1)) -> opar
+
+# extract data
+e1 = f$x
+e2 = f$y
+z = f$z
+
+# generate colors
+nb.col = 256
+color = heat.colors(nb.col)
+nrz = nrow(z)
+ncz = ncol(z)
+facet = -(z[-1, -1] + z[-1, -ncz] + z[-nrz, -1] + z[-nrz, -ncz])
+facetcol = cut(facet, nb.col)
+
+# plot
+persp(e1, e2, z, phi = 50, theta = -45, 
+      expand=0.5, col=color[facetcol],
+      ticktype="detailed", axes=F)
+
+par(opar)
+```
+
+## Diagonal elements of a Wishart random matrix
+
+We are now going to look at the diagonal elements of a Wishart matrix. First,  we sample $n=10^4$ Wishart matrices and extract their diagonals. First we setup our $\Sigma$ and our degrees of freedom $N=10$.
+
+```{r}
+N = 10
+Sigma = matrix(c(1,4/5,4/5,1), ncol=2)
+Sigma
+```
+
+Now we sample and extract the diagonals using `apply`.
+```{r}
+Ds = apply(rWishart(10^4, N, Sigma), 3, diag)
+```
+
+```{r}
+dim(Ds)
+```
+
+```{r}
+Ds[,1]
+```
+
+We plot histogram of marginals and compare the density against the density of a $\chi^2$ distribution with appropriate degrees of freedom.
+
+Create a histogram of each marginal and store it.
+```{r}
+hist(Ds[1,], breaks=30, plot=FALSE) -> h1
+hist(Ds[2,], breaks=30, plot=FALSE) -> h2
+```
+
+Create a custom histogram plot that looks nice.
+```{r}
+par(mfrow=c(1,2), xaxs="i", yaxs="i", cex=0.8, 
+    cex.axis=1.0) -> opar
+
+# density of marginal
+f = function(x) dchisq(x, df=N)
+
+plot(h1$breaks, c(h1$density, 0), type="s", 
+     xlab=expression(d[1]), ylab="", ylim=c(0, 0.11))
+curve(f, 0, 35, lwd=1, lty=3, add=TRUE)
+
+plot(h2$breaks, c(h2$density, 0), type="s", 
+     xlab=expression(d[2]), ylab="", ylim=c(0, 0.11))
+curve(f, 0, 35, lwd=1, lty=3, add=TRUE)
+
+title(main="Histograms of first and second diagonal compared to chi-squared density", outer=T, line=-2)
+
+par(opar)
+```
+
+Generating a scatter plot of diagonal elements shows that they are not independent.
+```{r}
+plot(Ds[1,], Ds[2,], xlim=c(0,35), ylim=c(0,35))
+```
+
+Or a nice 3D plot.
+```{r}
+require(MASS)
+
+f = kde2d(Ds[1,], Ds[2,], n=60)
+
+# set margins
+par(mai=c(0.1,0.1,0.1,0.1)) -> opar
+
+# extract data
+d1 = f$x
+d2 = f$y
+z = f$z
+
+persp(d1, d2, z, phi = 50, theta = -45, expand=0.5)
+
+par(opar)
+```
+
+Looking at the diagonal case $\Sigma = I_p$ and performing the Cholesky decomposition.
+
+```{r}
+Sigma = diag(1, 2, 2)
+Sigma
+```
+
+```{r}
+A = rWishart(1, N, Sigma)
+```
+
+```{r}
+diag(chol(A[,,1]))^2
+```
+
+```{r}
+Sigma = diag(1, 3, 3)
+
+tdiag = function(A) {
+  diag(chol(A))^2
+}
+
+Ts = apply(rWishart(10^4, N, Sigma), 3, tdiag)
+```
+
+```{r}
+dim(Ts)
+```
+
+This is $T_{11}^2$:
+```{r}
+length(Ts[1,])
+```
+
+This is $t_{22}^2$:
+```{r}
+length(Ts[2,])
+```
+
+```{r}
+hist(Ts[2,], 50)
+```
+
+
+```{r}
+hist(Ts[1,], breaks="FD", plot=FALSE) -> h1
+hist(Ts[2,], breaks="FD", plot=FALSE) -> h2
+hist(Ts[3,], breaks="FD", plot=FALSE) -> h3
+```
+
+Create a custom histogram plot that looks nice.
+```{r}
+par(mfrow=c(1,3), xaxs="i", yaxs="i", cex=0.8, 
+    cex.axis=1.0) -> opar
+
+# density of marginal
+f = function(x) dchisq(x, df=N)
+
+plot(h1$breaks, c(h1$density, 0), type="s", 
+     xlab=expression(t[1]), ylab="", ylim=c(0, 0.12))
+curve(f, 0, 35, lwd=1, lty=3, add=TRUE)
+
+f = function(x) dchisq(x, df=N-1)
+
+plot(h2$breaks, c(h2$density, 0), type="s", 
+     xlab=expression(t[2]), ylab="", ylim=c(0, 0.12))
+curve(f, 0, 35, lwd=1, lty=3, add=TRUE)
+
+f = function(x) dchisq(x, df=N-2)
+
+plot(h3$breaks, c(h3$density, 0), type="s", 
+     xlab=expression(t[2]), ylab="", ylim=c(0, 0.12))
+curve(f, 0, 35, lwd=1, lty=3, add=TRUE)
+
+#title(main="Histograms of first and second diagonal compared to chi-squared densities", outer=T, line=-2)
+
+par(opar)
+```
+
+We see that they are uncorrelated.
+```{r}
+plot(Ts[1,], Ts[2,])
+```
+
+# Sample Generalised Variance
+
+## Interpreting the generalised variance
+
+First, we are going to show that the generalised variance does not properly capture some details about the covariance structure of the population. We shall do this by constructing three different distributions with exactly the same *population generalised variance*.
+
+$p=2$
+
+Set the mean $\mu$.
+```{r}
+mu = c(2, 1)
+```
+
+The covariance $\Sigma_1$.
+```{r}
+Sigma1 = matrix(c(5,4,4,5), ncol=2)
+Sigma1
+```
+
+The covariance $\Sigma_2$.
+```{r}
+Sigma2 = matrix(c(3,0,0,3), ncol=2)
+Sigma2
+```
+
+The covariance $\Sigma_3$.
+```{r}
+Sigma3 = matrix(c(5,-4,-4,5), ncol=2)
+Sigma3
+```
+
+We load the `mvtnorm` library for sampling from the multivariate normal distribution.
+```{r}
+library(mvtnorm)
+```
+
+```{r}
+library(car)
+```
+
+Now we create a function that generates a nice scatter plot for us that has the confidence ellipses and plots the eigenvectors. You may need to install the package `car` for the `ellipse` function.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+SA = function(X) {
+  require(car)
+  
+  par(pty="s", bty="n") -> opar
+  
+  plot(X[,1], X[,2], pch=20, col="gray50", cex=0.2, 
+       axes=FALSE, xlab="", ylab="", xlim=range(X),
+       ylim=range(X))
+  
+  mr = as.integer(min(range(X)))
+  Mr = as.integer(max(range(X)))
+  
+  lpts = seq(mr, Mr, 1)
+  tpts = rep('', (Mr+1-mr))
+  tpts[(Mr+1-mr)] = Mr
+  tck = 0.005
+  axis(1, pos=0, tick=TRUE, tck = tck, label=FALSE, at=lpts)
+  axis(2, pos=0, tick=TRUE, tck = tck, label=FALSE, at=lpts)
+  axis(1, pos=0, tick=TRUE, tck = -1*tck, label=tpts, 
+       at=lpts,  padj=-2.5, cex.axis=0.7, lwd=0.5)
+  axis(2, pos=0, tick=TRUE, tck = -1*tck, label=tpts, 
+       at=lpts, cex.axis=0.7, hadj=-1.3, las=1)
+  
+  mu = colMeans(X)
+  Sigma = var(X)
+  e = eigen(Sigma)
+
+  for (i in 1:3) {
+    ellipse(mu, Sigma, i, xlim=range(X), ylim=range(X),
+          col=1, center.pch=19, center.cex=0.2,
+          lwd=0.8, lty=2)
+  }
+  
+  arrows(mu[1], mu[2], 
+         mu[1]+e$vectors[1,1]*sqrt(e$values[1])*2.5,
+         mu[2]+e$vectors[2,1]*sqrt(e$values[1])*2.5,
+         length=.04,col=1,lwd=1.5)
+  arrows(mu[1], mu[2],
+         mu[1]+e$vectors[1,2]*sqrt(e$values[2])*2.5,
+         mu[2]+e$vectors[2,2]*sqrt(e$values[2])*2.5,
+         length=.04, col=1, lwd=1.5)
+
+  par(opar)
+}
+```
+
+We now sample from each distribution and show that although they look very different each distribution as the same population generalised variance.
+
+```{r, message=FALSE, warning=FALSE}
+par(mfrow=c(1,3), mai=c(0,0.1,0.1,0.1)) -> opar 
+
+n = 500
+
+X = rmvnorm(n, mean=mu, sigma=Sigma1)
+Sn = t(X) %*% X / n
+pGV = det(Sigma1)
+SA(X)
+title(bquote(abs(Sigma[1])== ~ .(pGV)))
+
+X = rmvnorm(n, mean=mu, sigma=Sigma2)
+Sn = t(X) %*% X / n
+pGV = det(Sigma2)
+SA(X)
+title(bquote(abs(Sigma[2])== ~ .(pGV)))
+
+X = rmvnorm(n, mean=mu, sigma=Sigma3)
+Sn = t(X) %*% X / n
+pGV = det(Sigma3)
+SA(X)
+title(bquote(abs(Sigma[3])== ~ .(pGV)))
+
+par(opar)
+```
+
+## Distribution of sample GV using classic theory
+
+We look at the theorem that we proved in the lectures that shows
+$$
+\sqrt{N}\left(\frac{|\mathbb{S}|}{|\Sigma|} -1 \right) \to N(0,2p)
+$$
+for fixed $p$ and $n \to \infty$.
+
+### Uncorrelated and low dimensional ($p = 3$)
+
+We first try a simple example with $\Sigma = I_p$ and $p=3$.
+```{r}
+p = 3
+Sigma = diag(1, p, p)
+mu = rep(0, p)
+
+M = 1000 # number of MC simulations
+n = 2000 # number of observations
+
+MC = numeric(M)
+for (i in 1:M) {
+  X = rmvnorm(n, mean=mu, sigma=Sigma)
+  Sn = t(X) %*% X / (n-1)
+  MC[i] = sqrt(n)*(det(Sn)/det(Sigma) - 1)
+}
+```
+
+Generate histogram of MC simulations.
+```{r}
+hist(MC, breaks="FD", plot=FALSE) -> h
+```
+
+Create a custom histogram plot that looks nice.
+```{r}
+par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
+
+# theoretical density
+f = function(x) dnorm(x, mean=0, sd=sqrt(2*p))
+
+plot(h$breaks, c(h$density, 0), type="s", 
+     xlab="", ylab="", ylim=c(0, 0.2))
+
+curve(f, -10, 10, lwd=1, lty=3, add=TRUE)
+
+title(main="Histogram compared to normal density", outer=T, line=-2)
+
+par(opar)
+```
+
+### Correlated and low dimensional ($p = 3$)
+
+To create some test covariance matrices, I'll use the function from a previous workshop that generates this "power correlation matrix" (AR1) for an arbitrary $p$.
+```{r}
+pcor = function(rho, p) {
+  Tn = matrix(0, p, p)
+  for (i in 1:p) {
+    for (j in 1:p) {
+      Tn[i,j] = rho^abs(i-j)
+    }
+  }
+  return(Tn)
+}
+```
+
+```{r}
+p = 3
+Sigma = pcor(0.5, p)
+mu = rep(0, p)
+
+M = 1000 # number of MC simulations
+n = 2000 # number of observations
+
+MC = numeric(M)
+for (i in 1:M) {
+  X = rmvnorm(n, mean=mu, sigma=Sigma)
+  Sn = t(X) %*% X / (n-1)
+  MC[i] = sqrt(n)*(det(Sn)/det(Sigma) - 1)
+}
+```
+
+Generate histogram of MC simulations.
+```{r}
+hist(MC, breaks="FD", plot=FALSE) -> h
+```
+
+Create a custom histogram plot that looks nice.
+```{r}
+par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
+
+# theoretical density
+f = function(x) dnorm(x, mean=0, sd=sqrt(2*p))
+
+plot(h$breaks, c(h$density, 0), type="s", 
+     xlab="", ylab="", ylim=c(0, 0.2))
+curve(f, -10, 10, lwd=1, lty=3, add=TRUE)
+
+title(main="Histogram compared to normal density", outer=T, line=-2)
+
+par(opar)
+```
+
+### Uncorrelated and higher dimensional ($p = 10$)
+
+We take with $\Sigma = I_p$ and $p=10$.
+
+```{r}
+p = 10
+Sigma = diag(1, p, p)
+mu = rep(0, p)
+
+M = 1000 # number of MC simulations
+n = 2000 # number of observations
+
+MC = numeric(M)
+for (i in 1:M) {
+  X = rmvnorm(n, mean=mu, sigma=Sigma)
+  Sn = t(X) %*% X / (n-1)
+  MC[i] = sqrt(n)*(det(Sn)/det(Sigma) - 1)
+}
+```
+
+Generate histogram of MC simulations.
+```{r}
+hist(MC, breaks="FD", plot=FALSE) -> h
+```
+
+Create a custom histogram plot that looks nice.
+```{r}
+par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
+
+# theoretical density
+f = function(x) dnorm(x, mean=0, sd=sqrt(2*p))
+
+plot(h$breaks, c(h$density, 0), type="s", 
+     xlab="", ylab="", ylim=c(0, 0.2))
+curve(f, -10, 10, lwd=1, lty=3, add=TRUE)
+
+title(main="Histogram compared to normal density", outer=T, line=-2)
+
+par(opar)
+```
+
+### Uncorrelated and higher dimensional ($p = 30$)
+
+We take with $\Sigma = I_p$ and $p=30$.
+
+```{r}
+require(mvtnorm)
+
+p = 30
+Sigma = diag(1, p, p)
+mu = rep(0, p)
+
+M = 1000 # number of MC simulations
+n = 2000 # number of observations
+
+MC = numeric(M)
+for (i in 1:M) {
+  X = rmvnorm(n, mean=mu, sigma=Sigma)
+  Sn = t(X) %*% X / (n-1)
+  MC[i] = sqrt(n)*(det(Sn)/det(Sigma) - 1)
+}
+```
+
+Generate histogram of MC simulations.
+```{r}
+hist(MC, breaks="FD", plot=FALSE) -> h
+```
+
+Create a custom histogram plot that looks nice.
+```{r}
+par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
+
+# theoretical density
+f = function(x) dnorm(x, mean=0, sd=sqrt(2*p))
+
+plot(h$breaks, c(h$density, 0), type="s", 
+     xlab="", ylab="", ylim=c(0, 0.2))
+curve(f, -50, 50, lwd=1, lty=3, add=TRUE)
+
+title(main="Histogram compared to normal density", outer=T, line=-2)
+
+par(opar)
+```
+
+# Distribution of sample GV in high-dimensional setting
+
+```{r}
+d = function(u) 1 + (1-u)/u * log(1-u)
+```
+
+### Uncorrelated and higher dimensional ($p = 30$)
+
+```{r}
+require(mvtnorm)
+
+M = 1000 # number of MC simulations
+n = 2000 # number of observations
+p = 30
+
+Sigma = diag(1, p, p)
+mu = rep(0, p)
+
+yn = p/n # Finite horizon proxy
+
+MC = numeric(M)
+for (i in 1:M) {
+  X = rmvnorm(n, mean=mu, sigma=Sigma)
+  Sn = t(X) %*% X / (n-1)
+  #MC[i] = log(det(Sn)/det(Sigma)) + p * d(yn)
+  MC[i] = log(det(Sn)) + p * d(yn)
+}
+```
+
+```{r}
+mean(MC)
+```
+
+```{r}
+-0.5*log(1-yn)
+```
+
+```{r}
+hist(MC, breaks=seq(-1,1,length.out = 50))
+```
+
+Create a custom histogram plot that looks nice.
+```{r}
+par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
+
+hist(MC, breaks=seq(-1, 1, length.out = 100), plot=FALSE) -> h
+
+# theoretical density
+f = function(x) dnorm(x, mean=-0.5*log(1-yn), sd=sqrt(-2*log(1-yn)))
+
+plot(h$breaks, c(h$density, 0), type="s", 
+     xlab="", ylab="", ylim=c(0, 3.0))
+curve(f, -1, 1, lwd=1, lty=3, add=TRUE)
+
+title(main="Histogram compared to normal density", outer=T, line=-2)
+
+par(opar)
+```

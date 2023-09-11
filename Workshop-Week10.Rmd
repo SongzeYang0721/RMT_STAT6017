@@ -1,0 +1,647 @@
+---
+title: "Workshop - Week 10"
+---
+
+This week we consider PCA and the spiked covariance model.
+
+- PCA: classic and a high-dimensional example.
+- Distribution of the largest eigenvalue of a sample covariance matrix
+- The Tracy-Widom distribution of order 1
+- Solve ODE to obtain Tracy-Widom F1 Distribution
+- The spike covariance model
+
+# Principal component analysis
+
+First, let's review principal component analysis.
+
+## PCA on a low-dimensional data set using the inbuilt function
+
+We can start with the `iris` dataset that is built into R. The inbuilt function `princomp` performs a PCA on a dataset.
+
+I am going to operate on this subset of the iris data:
+
+```{r}
+iris[-5]
+```
+
+```{r}
+dim(iris[-5])
+```
+
+We perform the PCA on the dataset.
+
+```{r}
+irispca = princomp(iris[-5])
+irispca
+```
+
+
+We can next show the model summary and see that the first component (Comp. 1) explains a large proportion of the variance. 
+
+```{r}
+summary(irispca)
+```
+
+```{r}
+sqrt(0.9246187)
+```
+
+We can see the standard deviations of each of the principal components.
+```{r}
+irispca$sdev
+```
+
+Typically, a PCA de-means the data before performing the orthogonalisation algorithm. We can print the removed means with:
+```{r}
+irispca$center
+```
+
+We can extract the loadings (i.e., a matrix whose columns contain the eigenvectors).
+```{r}
+loadings(irispca)
+```
+
+We can plot a screeplot of the PCA. The default uses a boxplot.
+
+```{r}
+screeplot(irispca)
+```
+
+We can do something more similar to the lecture by specifying the type of plot and setting some graphics parameters.
+
+```{r}
+screeplot(irispca, type='lines', pch=19)
+```
+
+## PCA on a low-dimensional data set using our own function
+
+We can implement our own PCA quite easily. First we setup the data:
+
+```{r}
+data = iris[-5]
+```
+
+```{r}
+dim(data)
+```
+
+We compute the (vector) mean.
+```{r}
+mu = colMeans(data)
+print(mu)
+```
+
+Notice this matches:
+```{r}
+irispca$center
+```
+
+We now subtract these means from the data.
+```{r}
+data = sweep(data, 2, mu)
+```
+
+```{r}
+round(colMeans(data))
+```
+
+We now compute the covariance.
+```{r}
+S = cov(data)
+```
+
+We see that $p=4$ for the covariance matrix (as expected).
+```{r}
+dim(S)
+```
+
+We perform an eigendecomposition:
+```{r}
+E = eigen(S)
+```
+
+```{r}
+E$values
+```
+
+We can compute the proportion of the total variance explained by the components using the eigenvalues.
+```{r}
+propvar = c()
+total = sum(E$values)
+for (lambda in E$values) {
+  propvar = c(propvar, (lambda / total))
+}
+```
+
+```{r}
+propvar
+```
+
+Cumulative proportion of total variance:
+
+```{r}
+cumsum(propvar)
+```
+
+The "loadings" are simply given by
+```{r}
+round(E$vectors, 3)
+```
+
+Notice this matches:
+```{r}
+loadings(irispca, cutoff = 0.01)
+```
+
+```{r}
+plot(E$values, type="b", pch=16)
+```
+
+## Higher-dimensional example
+
+We are going to look at a higher-dimensional example: the Fashion MNIST dataset. We download the data.
+
+```{r include=FALSE}
+library(R.utils) # for gunzip
+URL = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
+fn = "t10k-images-idx3-ubyte.gz"
+download.file(paste0(URL, fn), fn)
+gunzip(fn, overwrite=TRUE)
+```
+
+We need our code to read the data.
+```{r}
+read_idx = function(file_name, endian = "big")
+{ if (!is.character(file_name)) stop("File_name must be character")
+  file = file(file_name, "rb")
+  # Check that the 2 first bytes contain the magic number  
+  magic_1 = readBin(file, "raw", n = 1, size = 1, endian = endian)
+  magic_2 = readBin(file, "raw", n = 1, size = 1, endian = endian)
+  if (any(as.character(c(magic_1, magic_2)) != c("00", "00")))
+    stop("The magic number doesn't match") 
+  # Detect the type of data
+  signed = TRUE
+  type = as.character(readBin(file, "raw", n = 1, size = 1, endian = endian))
+  if (type == "08")
+  { size = 1
+    signed = FALSE
+    what = "integer"
+  }
+  else if (type == "09")
+  { size = 1
+    what = "integer"
+  }
+  else if (type == "0b")
+  { size = 2
+    what = "integer"
+  }
+  else if (type =="0c")
+  { size = 4 
+    what = "integer"
+  }
+   else if (type =="0d")
+  { size = 4 
+    what = "numeric"
+  }
+  else if (type == "0e")
+  { size = 8
+    what = "double"
+  }
+  else stop("Type byte found is not supported")
+  # Get the number of dimensions
+  number_dim = as.integer(readBin(file, "raw", n = 1, size = 1, endian = endian))
+  # Get the actual dimensions
+  dims = numeric(number_dim)
+  for (i in seq_along(dims))
+  { dims[i] = readBin(file, "integer", n = 1, size = 4, endian = endian)
+  }
+  
+  cat(dims, "\n")
+  
+  # Read the data 
+  n_records = prod(dims)
+  data = readBin(file, what, n = n_records,  size = size, endian = endian, signed=signed)
+  close(file)
+  if (number_dim == 1) m = data
+  else
+  { m = array(data, dim=dims[number_dim:1])
+    m = aperm(m)
+  }
+  return(m)
+}
+```
+
+```{r}
+rotate = function(x) t(apply(x, 2, rev))
+```
+
+```{r}
+imshow = function(x, title = "", title.color = "black") {
+  par(pty="s")
+  image(rotate(x), axes = FALSE,
+        col = hcl.colors(256),
+        main = list(title, col = title.color),
+        useRaster=TRUE)
+}
+```
+
+```{r}
+fn = "t10k-images-idx3-ubyte.gz"
+X = read_idx(gsub(pattern = "\\.gz", "", fn))
+```
+
+```{r}
+imshow(X[8,,])
+```
+
+```{r}
+dim(X) = c(10000, 28*28)
+```
+
+```{r}
+dim(X)
+```
+
+Generate the principal components.
+```{r}
+pca = princomp(X)
+```
+
+Do a screeplot of the first 20 eigenvalues.
+```{r}
+screeplot(pca, 20, type="lines", pch=16)
+```
+
+An alternative is to use the `prcomp` function which allows the "rank" parameter which allows us to specify a cut-off.
+
+```{r}
+pca = prcomp(X, rank=6)
+```
+
+```{r}
+summary(pca)
+```
+
+The loadings are given by:
+```{r}
+dim(pca$rotation)
+```
+
+The mean is:
+```{r}
+mu = pca$center
+dim(mu) = c(28, 28)
+```
+
+```{r}
+imshow(mu)
+```
+
+We extract the first and second principal components and reshape them into images.
+```{r}
+pc1 = pca$rotation[,1]
+dim(pc1) = c(28,28)
+
+pc2 = pca$rotation[,2]
+dim(pc2) = c(28,28)
+```
+
+We can also get the standard deviations of the principal components.
+
+```{r}
+pca$sdev[1]
+```
+
+```{r}
+imshow(pc1)
+```
+
+```{r}
+imshow(pc2)
+```
+
+# Distribution of the largest eigenvalue of a sample covariance matrix
+
+We consider the distribution of the largest eigenvalue of a sample covariance matrix.
+
+## Null case: $\Sigma = I_p$
+
+We set:
+```{r}
+n = 100
+p = 50
+```
+
+This gives:
+```{r}
+y = p/n
+print(y)
+```
+
+And the upper support of the MP distribution is:
+```{r}
+b = (1+sqrt(y))^2
+b
+```
+
+Eigenvalues given by `eigen` are in decreasing order, so we only need the first one. We write a function to extract this value.
+```{r}
+max.eigen = function(x) {
+  eigen(x, only.values=TRUE)$values[1]
+}
+```
+
+We define our (population) covariance matrix.
+```{r}
+Sigma = diag(1, p, p)
+```
+
+We can sample 10000 Wishart random matrices with degree of freedom $n$ and then extract the largest eigenvalue of each one.
+```{r}
+lambda1 = apply(rWishart(10000, n, Sigma), 3, max.eigen)
+```
+
+```{r}
+length(lambda1)
+```
+
+We define the values $\mu_{np}$ and $\sigma_{np}$ (see lecture 10 p.3).
+
+```{r}
+mu.np = (sqrt(n-1/2)+sqrt(p-1/2))^2
+sigma.np = (sqrt(n)+sqrt(p))*(1/sqrt(n-0.5)+1/sqrt(p-0.5))^(1/3)
+```
+
+$\mu_{np}$ is close to $b$ for large $p,n$.
+
+```{r}
+abs(mu.np - b)
+```
+
+```{r}
+b
+```
+
+```{r}
+c(mu.np, sigma.np)
+```
+
+```{r}
+c(mean(lambda1), sd(lambda1))
+```
+
+We normalise the vector of $\lambda_1$'s using the formulas.
+
+```{r}
+F1 = (lambda1-mu.np)/sigma.np
+```
+
+We see that the mean is:
+```{r}
+mean(F1)
+```
+
+and the standard deviation:
+```{r}
+sd(F1)
+```
+
+We now plot the histogram.
+```{r}
+hist(F1, breaks=40, xlim=c(-4,4)) -> h
+```
+
+Replot the histogram with some nicer plot settings and we notice that it has a nice distribution.
+
+```{r}
+plot(h$mids, h$density, type="s", xlab="", ylab="", ylim=c(0,0.5))
+title(main="Distribution of largest eigenvalue")
+```
+
+## The Tracy-Widom distribution of order 1
+
+The Tracy-Widom distribution of order 1 is available in the package `RMTstat`. You can install with `install.packages('RMTstat')`
+
+```{r include=FALSE}
+library(RMTstat)
+```
+
+We use the library to plot the `dtw` against the histogram that we found.
+```{r}
+plot(h$mids, h$density, type="s", xlab="", ylab="", ylim=c(0,0.5))
+curve(dtw, -5, 5, lwd=2, lty=3, col="darkmagenta", add=TRUE)
+title(main="Distribution of largest eigenvalue vs. TW density")
+```
+
+The package `RMTstat` uses precomputed "magic" values to obtain the density.
+
+
+## Solve ODE to obtain Tracy-Widom F1 Distribution
+
+We solve the ODE on page 4 of Lecture 10.
+
+For this next section, you'll need to install the `deSolve` and `gsl` packages. Do this with `install.packages(c('deSolve', 'gsl'))`.
+
+Numerically solving to find the density of the Tracy-Widom distribution of order 1 is not easy; see the paper by Bornemann (2010).
+
+We first follow Bejan (2005) and solve the ODE as a system of first-order ODEs using the package `deSolve` (a numerical ODE solver) and `gsl` for the special functions such as the Airy function.
+
+```{r}
+library(deSolve)
+library(gsl)
+```
+
+```{r}
+#See eq (22), (23) and (24) in 2014-Bejan.
+deq = function(s, y, parms, ...) {
+    list(c(y[2],
+           s * y[1] + 2 * y[1] ^ 3,
+           y[4],
+           y[1] ^ 2,
+           -y[1]))
+}
+
+# Setup time (backward)
+t0 = 5
+tn = -5
+tspan = seq(t0, tn, length.out=1000)
+
+# 'Initial' condition
+# (actually a terminal condition since time goes backwards)
+
+y0 = c(airy_Ai(t0),
+        airy_Ai_deriv(t0),
+        0,
+        airy_Ai(t0) ^ 2,
+        0)
+
+# y0 = c(1.0834E-4, -2.4741E-4, 5.3178E-10, 1.1739E-8, 4.5743E-5)
+
+# Solve the ODE
+
+F.ode = ode(y=y0, times=tspan, func=deq, parms=NULL)
+```
+
+This allows us to plot:
+```{r}
+# time points
+s = F.ode[, "time"]
+
+# See eq (34) in 2014-Bejan
+f1 = -0.5*(F.ode[, "4"]-F.ode[, "1"]) * exp(-0.5*(F.ode[, "3"]+F.ode[, "5"]))
+
+plot(s, f1, type='l', main="Tracy-Widom F1 density", xlim=c(-5, 5), ylim=c(0,0.5), lwd=2, col="darkgreen")
+lines(h$mids, h$density, type="s", xlab="", ylab="", ylim=c(0,0.5))
+```
+
+Alternatively, we can extract the solution for $q$ from the ODE solver and then use `approxfun` to create an interpolating function.
+```{r}
+q = approxfun(tspan, F.ode[, "1"])
+plot(q, -5, 5, col = "darkgreen")
+```
+
+Then we use `q` and the definition for $I(s)$; see Eq (15) in 2005-Bejan.
+
+```{r}
+Ixx = function(s) {
+  integrand = function(x) {
+    (x - s)*q(x)^2
+  }
+  integrate(integrand, s, 5)$value
+}
+I = Vectorize(Ixx)
+```
+
+Then we use the definition for $I'(s)$; see below Eq (21).
+```{r}
+dIxx = function(s) {
+  integrand = function(x) {
+    -q(x)^2
+  }
+  integrate(integrand, s, 5)$value
+}
+dI = Vectorize(dIxx)
+```
+
+And then the definition for $J(s)$; see Eq (16).
+```{r}
+Jxx = function(s) {
+  integrand = function(x) {
+    q(x)
+  }
+  integrate(integrand, s, 5)$value
+}
+J = Vectorize(Jxx)
+```
+
+We plot them to check that they work.
+```{r}
+plot(I, -5, 5, col="darkgreen", ylim=c(-10,10))
+curve(dI, -5, 5, col="darkred", add=TRUE)
+curve(J, -5, 5, col="darkmagenta", add=TRUE)
+```
+
+Finally, we use the definition for $f_1(s)$ (see Eq (34)) and our functions above to generate the density and compare it to our histogram obtained from the simulation.
+
+```{r}
+f1 = function(s) {
+  -0.5*(dI(s)-q(s)) * exp(-0.5*(I(s)+J(s)))
+}
+
+plot(f1, -5, 5, type='l', main="Tracy-Widom F1 density", xlim=c(-5, 5), ylim=c(0,0.5), lwd=2, col="darkmagenta")
+lines(h$mids, h$density, type="s", xlab="", ylab="", ylim=c(0,0.5))
+```
+
+We can compare it to the density obtained by the RMTstat package.
+```{r}
+plot(f1, -5, 5, type='l', main="", xlim=c(-5, 5), lwd=2, col="green")
+curve(dtw, -5, 5, lwd=2, lty=3, col="magenta", add=TRUE)
+```
+
+There are better techniques for numerically solving these Painlevé transcendents but they are harder to implement in R. See the paper by Bornemann (2010).
+
+
+# The spike covariance model
+
+We set:
+```{r}
+n = 100
+p = 50
+```
+
+This gives:
+```{r}
+y = p/n
+print(y)
+```
+
+Recall that a critical point is $1+\sqrt{y}$
+
+```{r}
+1+sqrt(y)
+```
+
+We define our spikes:
+```{r}
+alphas = c(5)
+alphas
+```
+
+```{r}
+alphas > 1+sqrt(y)
+```
+
+$\alpha_1$ should be a large fundamental spike that converges to (see p.15 Lecture 10):
+```{r}
+alphas[1] + y * alphas[1]/(alphas[1] - 1)
+```
+
+We define our spiked (population) covariance matrix.
+```{r}
+Sigma = diag(1, p, p)
+for (k in 1:length(alphas)) {
+  Sigma[k,k] = alphas[k]
+}
+```
+
+We show our covariance matrix.
+```{r}
+imshow(Sigma)
+```
+```{r}
+Sigma[1:5,1:5]
+```
+We are going to compare against the Marcenko-Pastur density.
+```{r}
+dmp = function(x, y, sigma=1) {
+  a = (1-sqrt(y))^2
+  b = (1+sqrt(y))^2
+  ifelse(x <= a | x >= b, 0, suppressWarnings(sqrt((x - a) * (b - x))/(2 * pi * sigma * x * y)))
+}
+```
+
+```{r}
+eigenvalues = function(x) {
+  eigen(x, only.values=TRUE)$values
+}
+```
+
+We generate many eigenvalues
+```{r}
+lambdas = apply(rWishart(1000, n-1, Sigma)/(n-1), 3, eigenvalues)
+```
+
+```{r}
+c(1000, p)
+```
+
+```{r}
+length(lambdas)
+```
+
+We see there is an accumulation of eigenvalues around the fundamental spike and then the bulk is described by the MP distribution.
+```{r}
+hist(lambdas, breaks=1000, freq = FALSE)
+curve(dmp(x, y=p/n), from = 0, to = 1.5*max(lambdas), lty=1, lw=2, col=2, add=TRUE)
+abline(v = alphas[1] + y * alphas[1]/(alphas[1] - 1), lty=2, lwd=2, col='darkgreen')
+```
