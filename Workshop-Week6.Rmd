@@ -1,5 +1,8 @@
 ---
 title: "Workshop - Week 6"
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -8,7 +11,9 @@ par(family="sans", cex=0.8, cex.axis=1.0, cex.lab=1.0, cex.main=1.1, cex.sub=1.0
 
 # Linear spectral statistics
 
-Remember, we can generate one realisation of the sample covariance matrix $\mathbf{S}_n$.
+Remember, we can generate one realisation of the sample covariance
+matrix $\mathbf{S}_n$.
+
 ```{r}
 p = 200
 n = 800
@@ -20,7 +25,11 @@ Sn = X %*% t(X) / (n-1)
 dim(Sn)
 ```
 
-Remember, linear spectral statistics are function of the eigenvalues of the sample covariance matrix $\mathbf{S}_n$. They are easy to obtain by using the `eigen` function in R. For example, we can calculate the *generalised variance* statistics.
+Remember, linear spectral statistics are function of the eigenvalues of
+the sample covariance matrix $\mathbf{S}_n$. They are easy to obtain by
+using the `eigen` function in R. For example, we can calculate the
+*generalised variance* statistics.
+
 ```{r}
 L = eigen(Sn, only.values = TRUE)$values
 GV = sum(log(L))/p
@@ -34,11 +43,12 @@ GV
 
 ## Sampling the test statistic
 
-To look at the CLT, we need to simulate a large number of sample covariance matrices and then calculate the sum of their eigenvalues (or functions of the eigenvalues) divided by $p$. To make things easier, we are going to study the test statistic
-$$
+To look at the CLT, we need to simulate a large number of sample
+covariance matrices and then calculate the sum of their eigenvalues (or
+functions of the eigenvalues) divided by $p$. To make things easier, we
+are going to study the test statistic $$
 \mathbf{T}_n = \frac{1}{p}\sum_{k=1}^p \lambda_k.
-$$
-Notice here that the test function $\varphi(x) = x$.
+$$ Notice here that the test function $\varphi(x) = x$.
 
 ```{r}
 N = 1000
@@ -67,7 +77,6 @@ TS = replicate(N, {
 })
 ```
 
-
 ```{r}
 length(TS)
 ```
@@ -79,44 +88,43 @@ TS[1:20]
 ## Histogram of the test statistic distribution
 
 We can now plot a histogram of the fluctuations on this test statistic.
+
 ```{r}
 hist(TS, breaks="FD", freq=FALSE)
 ```
 
 ## Moment of the MP distribution
 
-We want to check the CLT by look at the deviation from $F_y(\varphi)$ for $\varphi(x) = x$. We know that
-$$
+We want to check the CLT by look at the deviation from $F_y(\varphi)$
+for $\varphi(x) = x$. We know that $$
 F_{s,t}(\varphi) = \int \varphi(x)\,F_{s,t}(x)dx = \int x\,F_{s,t}(x) dx = \frac{1}{1-t}
-$$
-where $F_{s,t}$ is the LSD for the random Fisher matrix and remember that $s=y, t=0$ gives $F_{y,0} = F_y$ is the Marchenko-Pastur distribution so that means
-$$
+$$ where $F_{s,t}$ is the LSD for the random Fisher matrix and remember
+that $s=y, t=0$ gives $F_{y,0} = F_y$ is the Marchenko-Pastur
+distribution so that means $$
 F_{y}(\varphi) = \int x\,F_{y}(x)dx = 1.
 $$
 
 ## CLT
 
 The theorem that we looked at this week told us that the quantity
-$$ p \left(F^{\mathbf{S}_n}(\varphi) - F_{y_n}(\varphi) \right) $$
-is Normally distributed with a mean and variance that we can calculate explicitly.
+$$ p \left(F^{\mathbf{S}_n}(\varphi) - F_{y_n}(\varphi) \right) $$ is
+Normally distributed with a mean and variance that we can calculate
+explicitly.
 
-Since 
-$$
+Since $$
 F^{\mathbf{S}_n} = \frac{1}{p} \sum_{k=1}^p \delta_{\lambda_k}
-$$
-we have, in the case $\varphi(x) = x$ that
-$$
+$$ we have, in the case $\varphi(x) = x$ that $$
 F^{\mathbf{S}_n}(\varphi) = \frac{1}{p} \sum_{k=1}^p \varphi(\lambda_k) = \frac{1}{p} \sum_{k=1}^p \lambda_k
 $$
 
-And we see from the histogram above that $F^{\mathbf{S}_n}(\varphi)$ should fluctuate around 1. In other words, the mean difference between $F^{\mathbf{S}_n}(\varphi)$ and $F_{y_n}(\varphi)$ should be zero.
+And we see from the histogram above that $F^{\mathbf{S}_n}(\varphi)$
+should fluctuate around 1. In other words, the mean difference between
+$F^{\mathbf{S}_n}(\varphi)$ and $F_{y_n}(\varphi)$ should be zero.
 
-The CLT we calculated this week also gave us the variance
-$$
+The CLT we calculated this week also gave us the variance $$
 2 y.
-$$
-This means that the variance of the difference between $F^{\mathbf{S}_n}(\varphi)$ and $F_{y_n}(\varphi)$ should be equal to
-$$
+$$ This means that the variance of the difference between
+$F^{\mathbf{S}_n}(\varphi)$ and $F_{y_n}(\varphi)$ should be equal to $$
   2 y_n = 2 \frac{p}{n}.
 $$
 
@@ -130,7 +138,9 @@ var(p*(TS-1))
 
 # In terms of Xn
 
-If we redo the first simulation in terms of $$X_n = p ( \frac{1}{p} \sum_{i=1}^p \lambda_i - 1)$$, the $X_n$ is centered at zero and has variance equal to $2p/n$.
+If we redo the first simulation in terms of
+$$X_n = p ( \frac{1}{p} \sum_{i=1}^p \lambda_i - 1)$$, the $X_n$ is
+centered at zero and has variance equal to $2p/n$.
 
 ```{r}
 N = 1000
@@ -170,10 +180,11 @@ for (i in 1:N) {
 ```{r}
 hist(TS, breaks="FD", freq=FALSE)
 ```
-In the case $\varphi(x) = \log(x)$ and $h = \sqrt{y}$,
-$$
+
+In the case $\varphi(x) = \log(x)$ and $h = \sqrt{y}$, $$
 F_{y}(\varphi) = \int \log(x)\,F_{y}(x)dx = -\log(1-y)\frac{1-y}{y}-1
 $$
+
 ```{r}
 y = p/n
 mu = -log(1-y)*(1-y)/y - 1
@@ -197,7 +208,8 @@ dmp = function(x, y, sigma=1) {
 }
 ```
 
-We will implement a similar function for the density of the Fisher LSD given by $P_{s,t}(x)$ in the lectures (week 5).
+We will implement a similar function for the density of the Fisher LSD
+given by $P_{s,t}(x)$ in the lectures (week 5).
 
 ```{r}
 dfisher = function(x, s, t) {
@@ -217,7 +229,8 @@ range.fisher = function(s, t) {
 }
 ```
 
-Remember that the Fisher distribution is a more general case than the MP LSD. We can obtain the MP from the Fisher by setting $s=y$ and $t=0$.
+Remember that the Fisher distribution is a more general case than the MP
+LSD. We can obtain the MP from the Fisher by setting $s=y$ and $t=0$.
 
 ```{r}
 p=200
@@ -226,18 +239,19 @@ curve(dfisher(x, s=p/n, t=0), from = 0, to = 3.5, lty=1, lwd=2)
 curve(dmp(x, y=p/n), from = 0, to = 3.5, lty=2, lwd=2, col=3, add=TRUE)
 ```
 
-
 ```{r}
 curve(dfisher(x, s=1/5, t=1/5), from = 0, to = 7, lty=1, lwd=2, n=300) # BLACK
 curve(dfisher(x, s=1/10, t=2/4), from = 0, to = 7, lty=1, lwd=2, col=6, n=300, add=TRUE) # MAGENTA
 ```
-This gives the lower and upper bounds of the distribution for a choice of parameters.
+
+This gives the lower and upper bounds of the distribution for a choice
+of parameters.
 
 ```{r}
 range.fisher(s=1/10, t=2/4)
 ```
 
-##
+## 
 
 ```{r}
 k = 5
@@ -257,6 +271,7 @@ hist(L, breaks=50, freq=FALSE, main="Density of Fisher against MP")
 curve(dmp(x, y=p/n1), from=0, to=1.5*max(L), col=6, lwd=2, add=TRUE)
 curve(dfisher(x, s=p/n1, t=p/n2), from=0, to=1.5*max(L), col=3, lwd=2, add=TRUE)
 ```
+
 ```{r}
 p = 100
 n1 = 400
@@ -266,7 +281,9 @@ mu = 1/(1-t)
 mu
 ```
 
-We consider the CLT in the case where $\varphi(x) = x$, in other words, the mean of the sample eigenvalues. The mean of the Fisher density is equal to $1/(1-t)$.
+We consider the CLT in the case where $\varphi(x) = x$, in other words,
+the mean of the sample eigenvalues. The mean of the Fisher density is
+equal to $1/(1-t)$.
 
 ```{r}
 N = 1000
@@ -289,6 +306,7 @@ hist(L, breaks=50, freq=FALSE, main="Density of Test Statistic")
 abline(v=mu, col=7, lwd=4)
 abline(v=mean(L), col=2, lwd=4, lty=2)
 ```
+
 ```{r}
 mean(L)
 ```
