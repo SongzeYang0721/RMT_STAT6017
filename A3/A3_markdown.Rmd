@@ -11,11 +11,7 @@ library(ggplot2)
 
 ## Question 1
 
-### How is the Fisher LSD related to the two vector samples $X$ and $Y$? What is the relationship between the two parameters $(s,t)$ of $F_{s,t}$ and the three values $(p,n_1,n_2)$ describing the dimensionality and sizes of $X$ and $Y$ ?
-
-
-
-
+How is the Fisher LSD related to the two vector samples $X$ and $Y$? What is the relationship between the two parameters $(s,t)$ of $F_{s,t}$ and the three values $(p,n_1,n_2)$ describing the dimensionality and sizes of $X$ and $Y$ ?
 
 ```{r}
 
