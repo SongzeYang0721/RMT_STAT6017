@@ -1,0 +1,219 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={6017\_A3},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{6017\_A3}
+\author{}
+\date{\vspace{-2.5em}2023-09-11}
+
+\begin{document}
+\maketitle
+
+\subsection{Question 1}\label{question-1}
+
+Suppose we had two independent \(p\)-dimensional vector samples
+\(X := {x_1,...,𝕩_{n_1}}\) and \(Y := {y_1,...,y_{n_2}}\) where
+\(p \leq n_2\). We assume that each sample comes from a (possibly
+different) population distribution with \(i.i.d.\) components and finite
+second moment.
+
+\begin{enumerate}
+\def\labelenumi{(\alph{enumi})}
+\tightlist
+\item
+  How is the Fisher LSD related to the two vector samples \(X\) and
+  \(Y\)? What is the relationship between the two parameters \((s,t)\)
+  of \(F_{s,t}\) and the three values \((p,n_1,n_2)\) describing the
+  dimensionality and sizes of \(X\) and \(Y\)?
+\end{enumerate}
+
+Denote the \(S_1\) as the sample covariance matrix for the \(X\) and the
+\(S_2\) as the sample covariance matrix for the \(Y\). The random Fisher
+matrices take the form of \(V_n = S_1 S_2^{-1}, n = (n_1,n_2)\). When
+the \(p/n_1 \rightarrow y_1\) and \(p/n_2 \rightarrow y_2\), the
+empirical spectral distribution (ESD) of \(F_n^{V_n}\) of \(V_n\)
+converges to the a limiting spectral distribution (LSD)
+\(F_{y_1, y_2}\), that is, \(s = y_1, t = y_2\).
+
+\begin{enumerate}
+\def\labelenumi{(\alph{enumi})}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Now that you explained the relationship between \(X, Y\) , the values
+  \((p, n_1, n_2)\) and the parameters \((s,t)\) of \(F_{s,t}\) in part
+  (a), what would you expect the empirical density of eigenvalues be for
+  the following three choices of triplets \((p, n1, n2)\):
+  \((50, 100, 100), (75, 100, 200), (25, 100, 200)\).
+\end{enumerate}
+
+Firstly, we can write a function about LSD of the Fisher matrix.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pdf\_Fisher }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, }\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{n1 =}\NormalTok{ n1, }\AttributeTok{n2 =}\NormalTok{ n2)\{}
+\NormalTok{  s }\OtherTok{=}\NormalTok{ p}\SpecialCharTok{/}\NormalTok{n1}
+\NormalTok{  t }\OtherTok{=}\NormalTok{ p}\SpecialCharTok{/}\NormalTok{n2}
+\NormalTok{  h }\OtherTok{=}\NormalTok{ (s }\SpecialCharTok{+}\NormalTok{ t }\SpecialCharTok{{-}}\NormalTok{ s}\SpecialCharTok{*}\NormalTok{t)}\SpecialCharTok{\^{}}\NormalTok{\{}\DecValTok{1}\SpecialCharTok{/}\DecValTok{2}\NormalTok{\}}
+\NormalTok{  a }\OtherTok{=}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ h)}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{/}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ t)}\SpecialCharTok{\^{}}\DecValTok{2}
+\NormalTok{  b }\OtherTok{=}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ h)}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{/}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ t)}\SpecialCharTok{\^{}}\DecValTok{2}
+  \FunctionTok{ifelse}\NormalTok{(x }\SpecialCharTok{\textless{}=}\NormalTok{ a }\SpecialCharTok{|}\NormalTok{ x }\SpecialCharTok{\textgreater{}=}\NormalTok{b, }\DecValTok{0}\NormalTok{, }\FunctionTok{suppressWarnings}\NormalTok{((}\DecValTok{1}\SpecialCharTok{{-}}\NormalTok{t)}\SpecialCharTok{/}\NormalTok{ (}\DecValTok{2} \SpecialCharTok{*}\NormalTok{ pi }\SpecialCharTok{*}\NormalTok{ x }\SpecialCharTok{*}\NormalTok{ (s }\SpecialCharTok{+}\NormalTok{ t}\SpecialCharTok{*}\NormalTok{x)) }\SpecialCharTok{*}\FunctionTok{sqrt}\NormalTok{((b }\SpecialCharTok{{-}}\NormalTok{ x) }\SpecialCharTok{*}\NormalTok{ (x }\SpecialCharTok{{-}}\NormalTok{a)), }\StringTok{"x"}\NormalTok{))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Then, we can write a function to create a equally spaced points inside
+the support of of the Fisher LSD.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fisher\_support }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(}\AttributeTok{n\_points =} \DecValTok{200}\NormalTok{, }\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{n1 =}\NormalTok{ n1, }\AttributeTok{n2 =}\NormalTok{ n2)\{}
+\NormalTok{  s }\OtherTok{=}\NormalTok{ p}\SpecialCharTok{/}\NormalTok{n1}
+\NormalTok{  t }\OtherTok{=}\NormalTok{ p}\SpecialCharTok{/}\NormalTok{n2}
+\NormalTok{  h }\OtherTok{=}\NormalTok{ (s }\SpecialCharTok{+}\NormalTok{ t }\SpecialCharTok{{-}}\NormalTok{ s}\SpecialCharTok{*}\NormalTok{t)}\SpecialCharTok{\^{}}\NormalTok{\{}\DecValTok{1}\SpecialCharTok{/}\DecValTok{2}\NormalTok{\}}
+\NormalTok{  a }\OtherTok{=}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ h)}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{/}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ t)}\SpecialCharTok{\^{}}\DecValTok{2}
+\NormalTok{  b }\OtherTok{=}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ h)}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{/}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ t)}\SpecialCharTok{\^{}}\DecValTok{2}
+  \FunctionTok{seq}\NormalTok{(a, b, }\AttributeTok{length.out =}\NormalTok{ n\_points)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Let's plot the three cases together.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{p }\OtherTok{=} \DecValTok{50}
+\NormalTok{n1 }\OtherTok{=} \DecValTok{100}
+\NormalTok{n2 }\OtherTok{=} \DecValTok{100}
+\NormalTok{x }\OtherTok{=} \FunctionTok{fisher\_support}\NormalTok{(}\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{n1 =}\NormalTok{ n1, }\AttributeTok{n2 =}\NormalTok{ n2)}
+\FunctionTok{plot}\NormalTok{(x, }\FunctionTok{pdf\_Fisher}\NormalTok{(x, }\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{n1 =}\NormalTok{ n1, }\AttributeTok{n2 =}\NormalTok{ n2), }\AttributeTok{type=}\StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{lwd=}\DecValTok{2}\NormalTok{, }\AttributeTok{col=}\StringTok{"red"}\NormalTok{)}
+\NormalTok{p }\OtherTok{=} \DecValTok{75}
+\NormalTok{n1 }\OtherTok{=} \DecValTok{100}
+\NormalTok{n2 }\OtherTok{=} \DecValTok{200}
+\NormalTok{x }\OtherTok{=} \FunctionTok{fisher\_support}\NormalTok{(}\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{n1 =}\NormalTok{ n1, }\AttributeTok{n2 =}\NormalTok{ n2)}
+\FunctionTok{lines}\NormalTok{(x, }\FunctionTok{pdf\_Fisher}\NormalTok{(x, }\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{n1 =}\NormalTok{ n1, }\AttributeTok{n2 =}\NormalTok{ n2), }\AttributeTok{type=}\StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{lwd=}\DecValTok{2}\NormalTok{, }\AttributeTok{col=}\StringTok{"darkgreen"}\NormalTok{, }\AttributeTok{ylab=}\StringTok{""}\NormalTok{)}
+\NormalTok{p }\OtherTok{=} \DecValTok{25}
+\NormalTok{n1 }\OtherTok{=} \DecValTok{100}
+\NormalTok{n2 }\OtherTok{=} \DecValTok{200}
+\NormalTok{x }\OtherTok{=} \FunctionTok{fisher\_support}\NormalTok{(}\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{n1 =}\NormalTok{ n1, }\AttributeTok{n2 =}\NormalTok{ n2)}
+\FunctionTok{lines}\NormalTok{(x, }\FunctionTok{pdf\_Fisher}\NormalTok{(x, }\AttributeTok{p =}\NormalTok{ p, }\AttributeTok{n1 =}\NormalTok{ n1, }\AttributeTok{n2 =}\NormalTok{ n2), }\AttributeTok{type=}\StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{lwd=}\DecValTok{2}\NormalTok{, }\AttributeTok{col=}\StringTok{"darkblue"}\NormalTok{, }\AttributeTok{ylab=}\StringTok{""}\NormalTok{)}
+\FunctionTok{legend}\NormalTok{(}\StringTok{"topright"}\NormalTok{, }\FunctionTok{c}\NormalTok{(}\StringTok{"(50,100,100)"}\NormalTok{, }\StringTok{"(75,100,200)"}\NormalTok{,}\StringTok{"(25,100,200)"}\NormalTok{), }\AttributeTok{col=}\FunctionTok{c}\NormalTok{(}\StringTok{"red"}\NormalTok{, }\StringTok{"darkgreen"}\NormalTok{,}\StringTok{"darkblue"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{A3_markdown_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+\subsection{Question 2}\label{question-2}
+
+You can also embed plots, for example:
+
+\includegraphics{A3_markdown_files/figure-latex/pressure-1.pdf}
+
+\subsection{Question 3}\label{question-3}
+
+\subsection{Reference}\label{reference}
+
+\end{document}

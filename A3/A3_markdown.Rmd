@@ -1,6 +1,8 @@
 ---
 title: "6017_A3"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 date: "2023-09-11"
 ---
 
@@ -11,13 +13,70 @@ library(ggplot2)
 
 ## Question 1
 
-How is the Fisher LSD related to the two vector samples $X$ and $Y$? What is the relationship between the two parameters $(s,t)$ of $F_{s,t}$ and the three values $(p,n_1,n_2)$ describing the dimensionality and sizes of $X$ and $Y$ ?
+Suppose we had two independent $p$-dimensional vector samples $X := {x_1,...,𝕩_{n_1}}$ and $Y := {y_1,...,y_{n_2}}$ where $p \leq n_2$. We assume that each sample comes from a (possibly different) population distribution with $i.i.d.$ components and finite second moment.
+
+(a) How is the Fisher LSD related to the two vector samples $X$ and $Y$? What is the relationship between the two parameters $(s,t)$ of $F_{s,t}$ and the three values $(p,n_1,n_2)$ describing the dimensionality and sizes of $X$ and $Y$?
+
+Denote the $S_1$ as the sample covariance matrix for the $X$ and the $S_2$ as the sample covariance matrix for the $Y$. The random Fisher matrices take the form of $V_n = S_1 S_2^{-1}, n = (n_1,n_2)$. When the $p/n_1 \rightarrow y_1$ and $p/n_2 \rightarrow y_2$, the empirical spectral distribution (ESD) of $F_n^{V_n}$ of $V_n$ converges to the a limiting spectral distribution (LSD) $F_{y_1, y_2}$, that is, $s = y_1, t = y_2$.
+
+(b) Now that you explained the relationship between $X, Y$ , the values $(p, n_1, n_2)$ and the parameters $(s,t)$ of $F_{s,t}$ in part (a), what would you expect the empirical density of eigenvalues be for the following three choices of triplets $(p, n1, n2)$: $(50, 100, 100), (75, 100, 200), (25, 100, 200)$.
+
+Firstly, we can write a function about LSD of the Fisher matrix.
+
+```{r}
+pdf_Fisher <- function(x, p = p, n1 = n1, n2 = n2){
+  s = p/n1
+  t = p/n2
+  h = (s + t - s*t)^{1/2}
+  a = (1 - h)^2 / (1 - t)^2
+  b = (1 + h)^2 / (1 - t)^2
+  ifelse(x <= a | x >=b, 0, suppressWarnings((1-t)/ (2 * pi * x * (s + t*x)) *sqrt((b - x) * (x -a)), "x"))
+}
+```
+
+Then, we can write a function to create a equally spaced points inside the support of of the Fisher LSD.
+
+```{r}
+fisher_support <- function(n_points = 200, p = p, n1 = n1, n2 = n2){
+  s = p/n1
+  t = p/n2
+  h = (s + t - s*t)^{1/2}
+  a = (1 - h)^2 / (1 - t)^2
+  b = (1 + h)^2 / (1 - t)^2
+  seq(a, b, length.out = n_points)
+}
+```
+
+Let's plot the three cases together.
+
+```{r}
+p = 50
+n1 = 100
+n2 = 100
+x = fisher_support(p = p, n1 = n1, n2 = n2)
+plot(x, pdf_Fisher(x, p = p, n1 = n1, n2 = n2), type='l', lwd=2, col="red")
+p = 75
+n1 = 100
+n2 = 200
+x = fisher_support(p = p, n1 = n1, n2 = n2)
+lines(x, pdf_Fisher(x, p = p, n1 = n1, n2 = n2), type='l', lwd=2, col="darkgreen", ylab="")
+p = 25
+n1 = 100
+n2 = 200
+x = fisher_support(p = p, n1 = n1, n2 = n2)
+lines(x, pdf_Fisher(x, p = p, n1 = n1, n2 = n2), type='l', lwd=2, col="darkblue", ylab="")
+legend("right", c("(50,100,100)", "(75,100,200)","(25,100,200)"), col=c("red", "darkgreen","darkblue"), )
+```
+
+(c) Perform a simulation study for the same choices of the triplets $(p,n1,n2)$ that are given in part (b). Setup your experiment correctly to demonstrate a histogram of eigenvalues and compare them to the appropriately parametrised densities from part (b). For each triplet $(p,n1,n2)$, plot the histogram of eigenvalues, overlay the appropriate density, and ensure the plot is appropriately titled. Show the code for your simulation study.
 
 ```{r}
 
 ```
 
-## Including Plots
+(d) Derive a formula for the first moment of the Fisher LSD in terms of its parameters $s$ and $t$. You can assume that $h > t$ as this always holds by the definition of $h$.
+
+## Question 2
 
 You can also embed plots, for example:
 
@@ -25,4 +84,6 @@ You can also embed plots, for example:
 plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Question 3
+
+## Reference
