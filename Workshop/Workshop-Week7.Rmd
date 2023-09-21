@@ -2,17 +2,18 @@
 title: "Workshop - Week 7"
 ---
 
+```{=tex}
 \newcommand{\X}{\mathbf{X}}
 \newcommand{\x}{\mathbf{x}}
 \newcommand{\T}{\mathbf{T}}
 \newcommand{\S}{\mathbf{S}}
 \newcommand{\A}{\mathbf{A}}
 \newcommand{\C}{\mathbf{C}}
-
-- Wishart Distribution
-- Sample Generalised Variance
-- Dist of Sample GV using classic approach
-- Dist of Sample GV using new high-dimensional approach
+```
+-   Wishart Distribution
+-   Sample Generalised Variance
+-   Dist of Sample GV using classic approach
+-   Dist of Sample GV using new high-dimensional approach
 
 # Wishart Distribution
 
@@ -27,26 +28,29 @@ eigenvalues = function(x) {
 ```
 
 Define our covariance matrix $\Sigma$.
+
 ```{r}
 Sigma = matrix(c(1,1/3,1/3,1), ncol=2)
 Sigma
 ```
 
 The function `rWishart` generates $n$ random matrices, distributed according to the Wishart distribution with parameters $\Sigma$ and $N=10$ degrees of freedom $W_p(N, \Sigma)$. It returns a numeric array, say `R`, of dimension $p \times p \times n$, where each `R[,,i]` is a positive definite matrix, a realization of the Wishart distribution $W_p(N, \Sigma)$.
+
 ```{r}
 A = rWishart(3, 10, Sigma)
 A
 ```
+
 ```{r}
 A[,,3]
 ```
-
 
 ```{r}
 eigenvalues(A[,,3])
 ```
 
 Now we sample $n=10^4$ Wishart matrices with covariance matrix $\Sigma$ and calculate the eigenvalues. We use the function `apply` to apply the `eigenvalues` function (above) to the 3rd margin of the numeric array returned by `rWishart`.
+
 ```{r}
 Ls = apply(rWishart(10^4, 10, Sigma), 3, eigenvalues)
 ```
@@ -56,6 +60,7 @@ dim(Ls)
 ```
 
 We can now plot the histograms of the marginals.
+
 ```{r}
 par(mfrow=c(1,2)) -> opar
 
@@ -68,15 +73,17 @@ par(opar)
 ```
 
 Scatter plot of the eigenvalues.
+
 ```{r}
 plot(Ls[1,], Ls[2,], xlim=c(0,35), ylim=c(0,35))
 ```
 
 Or if we are feeling fancy, generate a nice 3D plot using a kernel density estimate.
+
 ```{r, message=FALSE, warning=FALSE}
 require(MASS)
 
-f = kde2d(Ls[1,], Ls[2,], n=60, lims=c(-1,35,-1,35))
+f = kde2d(Ls[1,], Ls[2,], n=60, lims=c(-1,35,-1,35)) # kernel density plot
 
 # set margins
 par(mai=c(0.1,0.1,0.1,0.1)) -> opar
@@ -104,7 +111,7 @@ par(opar)
 
 ## Diagonal elements of a Wishart random matrix
 
-We are now going to look at the diagonal elements of a Wishart matrix. First,  we sample $n=10^4$ Wishart matrices and extract their diagonals. First we setup our $\Sigma$ and our degrees of freedom $N=10$.
+We are now going to look at the diagonal elements of a Wishart matrix. First, we sample $n=10^4$ Wishart matrices and extract their diagonals. First we setup our $\Sigma$ and our degrees of freedom $N=10$.
 
 ```{r}
 N = 10
@@ -113,8 +120,9 @@ Sigma
 ```
 
 Now we sample and extract the diagonals using `apply`.
+
 ```{r}
-Ds = apply(rWishart(10^4, N, Sigma), 3, diag)
+Ds = apply(rWishart(10^4, N, Sigma), 3, diag) # extract the diagonal value of the Wishart matrix
 ```
 
 ```{r}
@@ -128,12 +136,14 @@ Ds[,1]
 We plot histogram of marginals and compare the density against the density of a $\chi^2$ distribution with appropriate degrees of freedom.
 
 Create a histogram of each marginal and store it.
+
 ```{r}
 hist(Ds[1,], breaks=30, plot=FALSE) -> h1
 hist(Ds[2,], breaks=30, plot=FALSE) -> h2
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(mfrow=c(1,2), xaxs="i", yaxs="i", cex=0.8, 
     cex.axis=1.0) -> opar
@@ -145,6 +155,8 @@ plot(h1$breaks, c(h1$density, 0), type="s",
      xlab=expression(d[1]), ylab="", ylim=c(0, 0.11))
 curve(f, 0, 35, lwd=1, lty=3, add=TRUE)
 
+f = function(x) dchisq(x, df=N-1)
+
 plot(h2$breaks, c(h2$density, 0), type="s", 
      xlab=expression(d[2]), ylab="", ylim=c(0, 0.11))
 curve(f, 0, 35, lwd=1, lty=3, add=TRUE)
@@ -155,11 +167,13 @@ par(opar)
 ```
 
 Generating a scatter plot of diagonal elements shows that they are not independent.
+
 ```{r}
 plot(Ds[1,], Ds[2,], xlim=c(0,35), ylim=c(0,35))
 ```
 
 Or a nice 3D plot.
+
 ```{r}
 require(MASS)
 
@@ -208,11 +222,13 @@ dim(Ts)
 ```
 
 This is $T_{11}^2$:
+
 ```{r}
 length(Ts[1,])
 ```
 
 This is $t_{22}^2$:
+
 ```{r}
 length(Ts[2,])
 ```
@@ -221,7 +237,6 @@ length(Ts[2,])
 hist(Ts[2,], 50)
 ```
 
-
 ```{r}
 hist(Ts[1,], breaks="FD", plot=FALSE) -> h1
 hist(Ts[2,], breaks="FD", plot=FALSE) -> h2
@@ -229,6 +244,7 @@ hist(Ts[3,], breaks="FD", plot=FALSE) -> h3
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(mfrow=c(1,3), xaxs="i", yaxs="i", cex=0.8, 
     cex.axis=1.0) -> opar
@@ -258,8 +274,9 @@ par(opar)
 ```
 
 We see that they are uncorrelated.
+
 ```{r}
-plot(Ts[1,], Ts[2,])
+plot(Ts[1,], Ts[2,]) # not correlated
 ```
 
 # Sample Generalised Variance
@@ -271,29 +288,34 @@ First, we are going to show that the generalised variance does not properly capt
 $p=2$
 
 Set the mean $\mu$.
+
 ```{r}
 mu = c(2, 1)
 ```
 
 The covariance $\Sigma_1$.
+
 ```{r}
 Sigma1 = matrix(c(5,4,4,5), ncol=2)
 Sigma1
 ```
 
 The covariance $\Sigma_2$.
+
 ```{r}
 Sigma2 = matrix(c(3,0,0,3), ncol=2)
 Sigma2
 ```
 
 The covariance $\Sigma_3$.
+
 ```{r}
 Sigma3 = matrix(c(5,-4,-4,5), ncol=2)
 Sigma3
 ```
 
 We load the `mvtnorm` library for sampling from the multivariate normal distribution.
+
 ```{r}
 library(mvtnorm)
 ```
@@ -381,15 +403,14 @@ par(opar)
 
 ## Distribution of sample GV using classic theory
 
-We look at the theorem that we proved in the lectures that shows
-$$
+We look at the theorem that we proved in the lectures that shows $$
 \sqrt{N}\left(\frac{|\mathbb{S}|}{|\Sigma|} -1 \right) \to N(0,2p)
-$$
-for fixed $p$ and $n \to \infty$.
+$$ for fixed $p$ and $n \to \infty$.
 
 ### Uncorrelated and low dimensional ($p = 3$)
 
 We first try a simple example with $\Sigma = I_p$ and $p=3$.
+
 ```{r}
 p = 3
 Sigma = diag(1, p, p)
@@ -407,11 +428,13 @@ for (i in 1:M) {
 ```
 
 Generate histogram of MC simulations.
+
 ```{r}
 hist(MC, breaks="FD", plot=FALSE) -> h
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 
@@ -431,6 +454,7 @@ par(opar)
 ### Correlated and low dimensional ($p = 3$)
 
 To create some test covariance matrices, I'll use the function from a previous workshop that generates this "power correlation matrix" (AR1) for an arbitrary $p$.
+
 ```{r}
 pcor = function(rho, p) {
   Tn = matrix(0, p, p)
@@ -460,11 +484,13 @@ for (i in 1:M) {
 ```
 
 Generate histogram of MC simulations.
+
 ```{r}
 hist(MC, breaks="FD", plot=FALSE) -> h
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 
@@ -501,11 +527,13 @@ for (i in 1:M) {
 ```
 
 Generate histogram of MC simulations.
+
 ```{r}
 hist(MC, breaks="FD", plot=FALSE) -> h
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 
@@ -544,11 +572,13 @@ for (i in 1:M) {
 ```
 
 Generate histogram of MC simulations.
+
 ```{r}
 hist(MC, breaks="FD", plot=FALSE) -> h
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 
@@ -561,7 +591,7 @@ curve(f, -50, 50, lwd=1, lty=3, add=TRUE)
 
 title(main="Histogram compared to normal density", outer=T, line=-2)
 
-par(opar)
+par(opar) # the classical theory does not work
 ```
 
 # Distribution of sample GV in high-dimensional setting
@@ -593,9 +623,13 @@ for (i in 1:M) {
 }
 ```
 
+The simulation mean is:
+
 ```{r}
 mean(MC)
 ```
+
+The theoretical mean is:
 
 ```{r}
 -0.5*log(1-yn)
@@ -606,6 +640,7 @@ hist(MC, breaks=seq(-1,1,length.out = 50))
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 
