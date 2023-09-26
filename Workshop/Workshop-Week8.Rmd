@@ -6,14 +6,19 @@ output:
   html_document:
     fig_height: 4
     toc: yes
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
+
+```{=tex}
 \newcommand{\X}{\mathbf{X}}
 \newcommand{\x}{\mathbf{x}}
 \newcommand{\T}{\mathbf{T}}
 \newcommand{\S}{\mathbf{S}}
 \newcommand{\A}{\mathbf{A}}
 \newcommand{\C}{\mathbf{C}}
-
+```
 # Correlation coefficient
 
 ## Population correlation in bivariate case
@@ -23,8 +28,8 @@ Sigma = matrix(c(5,4,4,5), ncol=2)
 Sigma
 ```
 
-Use `cov2cor` to scale the covariance matrix $\Sigma$ by its diagonal to become the correlation matrix
-$$
+Use `cov2cor` to scale the covariance matrix $\Sigma$ by its diagonal to
+become the correlation matrix $$
   R = \begin{pmatrix}1 & \rho\\ \rho & 1 \end{pmatrix}
 $$
 
@@ -33,21 +38,27 @@ R = cov2cor(Sigma)
 R
 ```
 
-Alternatively, we can compute $\rho$ explicitly in the bivariate case from the formula
+Alternatively, we can compute $\rho$ explicitly in the bivariate case
+from the formula
 $$ \rho = \frac{\sigma_{12}}{\sqrt{\sigma_{11} \sigma_{22}}}. $$
+
 ```{r}
 rho = Sigma[1,2]/(sqrt(Sigma[1,1]*Sigma[2,2]))
 rho
 ```
 
-##  Sample correlation distribution in bivariate case
+## Sample correlation distribution in bivariate case
 
-We load the `mvtnorm` library for sampling from the multivariate normal distribution.
+We load the `mvtnorm` library for sampling from the multivariate normal
+distribution.
+
 ```{r}
 library(mvtnorm)
 ```
 
-We sample $N$ observations from a $\mathcal{N}(\mu, \Sigma)$ distribution.
+We sample $N$ observations from a $\mathcal{N}(\mu, \Sigma)$
+distribution.
+
 ```{r}
 N = 100
 mu = c(0,0)
@@ -60,29 +71,33 @@ dim(X)
 ```
 
 We can calculate the sample covariance matrix "by hand".
+
 ```{r}
 S = t(X) %*% X / (N-1)
 S
 ```
 
 Or use the in-built function (which may be a bit more accurate).
+
 ```{r}
 S = cov(X)
 S
 ```
 
-Then the sample correlation matrix can be obtained by converting the sample covariance.
+Then the sample correlation matrix can be obtained by converting the
+sample covariance.
+
 ```{r}
 cov2cor(S)
 ```
 
 Or alternatively, by calculating it directly from the observations.
+
 ```{r}
 cor(X)
 ```
 
-The sample correlation between the coordinates $X_1$ and $X_2$ is 
-$$
+The sample correlation between the coordinates $X_1$ and $X_2$ is $$
 R = \frac{S_{12}}{\sqrt{S_{11} S_{22}}}
 $$
 
@@ -93,7 +108,8 @@ R
 
 *Checking Theorem on Page 4 of lecture*
 
-We now look at the distribution in the case that $\rho = 0$ by sample $N$ observations from a $N_2(\mu, I)$ distribution.
+We now look at the distribution in the case that $\rho = 0$ by sample
+$N$ observations from a $N_2(\mu, I)$ distribution.
 
 ```{r}
 p = 2
@@ -112,11 +128,13 @@ for (i in 1:M) {
 ```
 
 Generate histogram of MC simulations.
+
 ```{r}
 hist(MC, breaks="FD", plot=FALSE) -> h
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 
@@ -131,11 +149,12 @@ title(main="Histogram compared to Student's t density", outer=T, line=-2)
 
 par(opar)
 ```
+
 ## Classic asymptotic
 
 ```{r}
 p = 2
-rho = 0.1
+rho = 0.1 # population correlation is known
 Sigma = diag(1, p, p)
 Sigma[1,2] = rho
 Sigma[2,1] = rho
@@ -146,7 +165,7 @@ Sigma
 mu = rep(0, p)
 
 M = 5000 # number of MC simulations
-n = 30 # number of observations
+n = 500 # number of observations
 
 MC = numeric(M)
 for (i in 1:M) {
@@ -161,12 +180,13 @@ hist(MC, "FD", freq=FALSE)
 curve(dnorm, col="red", lwd=3, add=TRUE)
 ```
 
-
 # Multiple correlation coefficient
 
 ## Population multiple correlation
 
-We look at the population multiple correlation coefficient between $X_1$ and $\mathbb{X}_2 = (X_2, X_3, \ldots, X_p)'$. Let's look at a simple example where $p=5$. Generate a random covariance matrix.
+We look at the population multiple correlation coefficient between $X_1$
+and $\mathbb{X}_2 = (X_2, X_3, \ldots, X_p)'$. Let's look at a simple
+example where $p=5$. Generate a random covariance matrix.
 
 ```{r}
 p = 5
@@ -175,19 +195,18 @@ Sigma =  t(X) %*% X
 Sigma
 ```
 
-Partitioning the covariance matrix $\Sigma$ as
-$$
+Partitioning the covariance matrix $\Sigma$ as $$
 \Sigma =
 \begin{pmatrix}
 \sigma_{11} & \bar{\sigma}_{21}'\\
 \bar{\sigma}_{21} & \Sigma_{22}
 \end{pmatrix}.
-$$
-The multiple correlation coefficient between $X_1$ and $\X_2$ is
-$$
+$$ The multiple correlation coefficient between $X_1$ and $\mathbf{X}_2$
+is $$
 \rho =
 \sqrt{\frac{\bar{\sigma}_{21}' \Sigma_{22}^{-1}\bar{\sigma}_{21}}{\sigma_{11}}}
 $$
+
 ```{r}
 t(Sigma[2:p,1])
 ```
@@ -199,10 +218,10 @@ dim(Sigma[2:p,2:p])
 ```{r}
 Sigma
 ```
+
 ```{r}
 Sigma[2:p, 2:p]
 ```
-
 
 ```{r}
 p = ncol(Sigma)
@@ -212,11 +231,13 @@ rho
 
 ## Sample multiple correlation
 
-We sample $N$ observations from a $\mathcal{N}(\mu, \Sigma)$ distribution.
+We sample $N$ observations from a $\mathcal{N}(\mu, \Sigma)$
+distribution.
+
 ```{r}
 N = 100
 mu = rep(0, p)
-X = rmvnorm(N, mean=mu, sigma=Sigma)
+X = rmvnorm(N, mean=mu, sigma=Sigma) # data matrix
 ```
 
 ```{r}
@@ -224,6 +245,7 @@ dim(X)
 ```
 
 The sample MCC is given by
+
 ```{r}
 S = cov(X)
 p = nrow(S)
@@ -240,12 +262,12 @@ p = 5
 Sigma = diag(1, p, p)
 mu = rep(0, p)
 
-M = 5000 # number of MC simulations
+M = 8000 # number of MC simulations
 n = 1000 # number of observations
 
 MC = numeric(M)
 for (i in 1:M) {
-  X = rmvnorm(n, mean=mu, sigma=Sigma)
+  X = rmvnorm(n, mean=mu, sigma=Sigma) 
   S = cov(X)
   R = sqrt(t(S[2:p,1]) %*% solve(S[2:p,2:p]) %*% S[2:p,1] / S[1,1])
   Rsq = R**2
@@ -254,16 +276,18 @@ for (i in 1:M) {
 ```
 
 Generate histogram of MC simulations.
+
 ```{r}
 hist(MC, breaks="FD", plot=FALSE) -> h
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 
 # theoretical density
-f = function(x) df(x, df1=p-1, df2=n-p)
+f = function(x) df(x, df1=p-1, df2=n-p) # compared with F distribution
 
 plot(h$breaks, c(h$density, 0), type="s", xlab="", ylab="", ylim=c(0, 0.9))
 
@@ -273,7 +297,6 @@ title(main="Histogram compared to F density", outer=T, line=-2)
 
 par(opar)
 ```
-
 
 ## Sample multiple correlation distribution - Adjusted case
 
@@ -298,11 +321,13 @@ for (i in 1:M) {
 ```
 
 Generate histogram of MC simulations.
+
 ```{r}
 hist(MC, breaks="FD", plot=FALSE) -> h
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 
@@ -311,24 +336,28 @@ f = function(x) df(x, df1=p-1, df2=n-p)
 
 plot(h$breaks, c(h$density, 0), type="s", xlab="", ylab="", ylim=c(0, 0.9))
 
-curve(f, 0, 5, lwd=1, lty=3, add=TRUE)
+curve(f, 0, 5, lwd=3, lty=3, add=TRUE)
 
 title(main="Histogram compared to F density", outer=T, line=-2)
 
 par(opar)
 ```
-Notice that the theorem in the lecture doesn't apply to the adjusted R-squared given by $R^*$.
+
+Notice that the theorem in the lecture doesn't apply to the adjusted
+R-squared given by $R^*$.
 
 # High-dimensional regime / MP regime
 
 ## Over-estimation of $R^2$
 
 Choose a large $p$.
+
 ```{r}
 p = 500
 ```
 
 Generate a population covariance matrix, AR1-style covariance.
+
 ```{r}
 pcor = function(rho, p) {
   Tn = matrix(0, p, p)
@@ -344,6 +373,7 @@ Sigma = pcor(0.6, p)
 ```
 
 Calculate the population MCC.
+
 ```{r}
 p = ncol(Sigma)
 rho = sqrt(t(Sigma[2:p,1]) %*% solve(Sigma[2:p,2:p]) %*% Sigma[2:p,1] / Sigma[1,1])
@@ -367,7 +397,12 @@ for (i in 1:M) {
 }
 ```
 
-We can see that the quantity $R^2 - (1-y)\rho^2 - y$ is closely distributed around zero, or in other words, $R^2$ does not converge to $\rho^2$ as desired! So in the high-dimensional case, $R^2 \to (1-y)\rho^2 + y$ instead compared to the classic theory that states $R^2 \to \rho^2$.
+We can see that the quantity $R^2 - (1-y)\rho^2 - y$ is closely
+distributed around zero, or in other words, $R^2$ does not converge to
+$\rho^2$ as desired! So in the high-dimensional case,
+$R^2 \to (1-y)\rho^2 + y$ instead compared to the classic theory that
+states $R^2 \to \rho^2$.
+
 ```{r}
 mean(MC)
 ```
@@ -379,11 +414,13 @@ sd(MC)
 ## Central limit theorem
 
 Choose a large $p$.
+
 ```{r}
 p = 250
 ```
 
 Generate a population covariance matrix.
+
 ```{r}
 pcor = function(rho, p) {
   Tn = matrix(0, p, p)
@@ -399,6 +436,7 @@ Sigma = pcor(0.6, p)
 ```
 
 Calculate the population MCC.
+
 ```{r}
 p = ncol(Sigma)
 rho = sqrt(t(Sigma[2:p,1]) %*% solve(Sigma[2:p,2:p]) %*% Sigma[2:p,1] / Sigma[1,1])
@@ -422,6 +460,7 @@ for (i in 1:M) {
 ```
 
 Generate histogram of MC simulations.
+
 ```{r}
 hist(MC, breaks="FD", plot=FALSE) -> h
 ```
@@ -431,6 +470,7 @@ sigmasq = function(t) 2*(y+(1-y)*t)^2 - 2*(-2*(1-y)*t^2 + 4*(1-y)*t+2*y)*(y+(1-y
 ```
 
 Create a custom histogram plot that looks nice.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 
