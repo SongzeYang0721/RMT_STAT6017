@@ -1,0 +1,26 @@
+# Tutorial 8 for week 8
+
+This is a sample solution to the tutorial 8. Simulation runs through the tutorial. \
+\
+Review of kernel density estimators.
+
+Wishart matrix:$$
+A = \sum_{i=1}^n Z_i Z_i^T
+$$
+
+Review of the property of Wishart distribution.
+
+$$
+\frac{1}{n-1}A = S_n
+$$
+
+We cover the theorms in the lecture.
+
+```{r}
+library(mvnfast)
+p = 500
+n = 1000
+Sigma = diag(p)
+X = rmvn(n, mu, Sigma)
+L  = eigen(S)
+```

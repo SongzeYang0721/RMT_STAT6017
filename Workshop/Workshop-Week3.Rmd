@@ -3,11 +3,15 @@ title: "Workshop - Week 3"
 output:
   html_document:
     toc: yes
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 # Multivariate normals
 
 First, we load some packages.
+
 ```{r}
 library(Matrix)   # matrix operations
 library(mvtnorm)
@@ -37,8 +41,9 @@ rnorm(3)
 
 $$
 N(0, I_p)
-$$
-Generate a Multivariate Normal Sample as a linear combination of iid standard normal rvs.
+$$ Generate a Multivariate Normal Sample as a linear combination of iid
+standard normal rvs.
+
 ```{r}
 N = matrix(rnorm(5*2), 2, 5) # 5x2 iid N(0,1) rvs
 N
@@ -54,13 +59,13 @@ X = A %*% N                 # 5x2 linear combination
 X
 ```
 
-We can also generate a Multivariate Normal Sample using the R function `mvrnorm`.
+We can also generate a Multivariate Normal Sample using the R function
+`mvrnorm`.
 
 ```{r}
 Sigma = matrix(c(10,4,4,2), 2, 2)
 Sigma
 ```
-
 
 ```{r}
 mvrnorm(n=1, c(0,0), Sigma) # sample 1x2 with mean [0,0]
@@ -103,6 +108,7 @@ Sigma # populuation covariance
 ```
 
 Here, `Sigma` is the population variance.
+
 ```{r}
 X = mvrnorm(n=10000, rep(0, 2), Sigma)
 S = var(X)
@@ -113,6 +119,7 @@ S
 ```
 
 Here, `S` is the sample covariance.
+
 ```{r}
 X = mvrnorm(n=1000, rep(0, 2), S, empirical = TRUE)
 var(X)
@@ -121,6 +128,7 @@ var(X)
 ## Calculating correlation and covariance matrices
 
 We calculate the correlation matrices for `N` and `X`.
+
 ```{r}
 cor(N)
 ```
@@ -130,12 +138,14 @@ cor(X)
 ```
 
 We can calculate the variance-covariance matrices for `N` and `X`.
+
 ```{r}
 cov(X)
 cor(X)
 ```
 
 These give both the same results as the function `cov`.
+
 ```{r}
 var(X)
 ```
@@ -143,6 +153,7 @@ var(X)
 ## Sampling a multivariate normal distribution with given covariance
 
 Setup the (population) covariance matrices.
+
 ```{r}
 Sigma = matrix(c(10,4,4,2), 2, 2)
 Sigma
@@ -154,12 +165,14 @@ I
 ```
 
 Generate two large samples with these variances.
+
 ```{r}
 N = mvrnorm(n=10000, c(0,0), I)
 X = mvrnorm(n=10000, c(0,0), Sigma)
 ```
 
-Perform the spectral decomposition and obtain the eigenvectors and eigenvalues.
+Perform the spectral decomposition and obtain the eigenvectors and
+eigenvalues.
 
 ```{r}
 eigen(Sigma)
@@ -180,17 +193,18 @@ L = e$values
 P
 ```
 
-Generate the *inverse square-root matrix* using $A^k = P D^{k} P^{T}$ for $k \in \mathbb{Z}$ where $D$ is a diagonal matrix. I want to calculate
-$$
+Generate the *inverse square-root matrix* using $A^k = P D^{k} P^{T}$
+for $k \in \mathbb{Z}$ where $D$ is a diagonal matrix. I want to
+calculate $$
 A^{-1/2} = P D^{-1/2} P^T
 $$
 
 $$
 D = \text{diag}(1/\sqrt{\lambda_1}, \ldots, 1/\sqrt{\lambda_n})
-$$
-$$
+$$ $$
 D = \text{diag}({\lambda_1}^{-1/2}, \ldots, {\lambda_n}^{-1/2})
 $$
+
 ```{r}
 L
 ```
@@ -209,23 +223,22 @@ Sigma
 ```
 
 This is $\Sigma^{-1/2}$:
+
 ```{r}
 Sm = P %*% D %*% t(P)
 Sm
 ```
 
-Using the same technique generate the *square-root matrix*.
-$$
+Using the same technique generate the *square-root matrix*. $$
 D^{1/2} = 
 \begin{pmatrix}
 \sqrt{\lambda_1} & 0 \\
 0 & \sqrt{\lambda_2}. \\
 \end{pmatrix}
-$$
-Giving
-$$
+$$ Giving $$
 \Sigma^{1/2}.
 $$
+
 ```{r}
 Sp = P %*% diag(sqrt(L)) %*% t(P)
 Sp
@@ -237,10 +250,11 @@ $$
 
 $$
 \Sigma^{-1/2} X \sim N_p(0,I)
-$$
-Reminder: If $X \sim N(0,\sigma^2)$ then $\frac{1}{\sigma} X \sim N(0,1)$
+$$ Reminder: If $X \sim N(0,\sigma^2)$ then
+$\frac{1}{\sigma} X \sim N(0,1)$
 
 Generate a vector of iid $N(0,1)$ rvs.
+
 ```{r}
 Z = t( Sm %*% t(X) )
 ```
@@ -252,17 +266,15 @@ dim(Z)
 ```{r}
 var(Z)
 ```
+
 $$
 N_p(0, \Sigma) \Leftarrow N \sim N_p(0,I)
-$$
-$$
+$$ $$
 \Sigma^{1/2} N \sim N_p(0,\Sigma)
-$$
-$$
+$$ $$
 Z \sim N(0,1) \\
 \sigma Z \sim N(0,\sigma^2)
-$$
-Generate a MVN rv with variance `Sigma`.
+$$ Generate a MVN rv with variance `Sigma`.
 
 ```{r}
 X1 = t( Sp %*% t(N) )
@@ -283,6 +295,7 @@ dim(X1)
 ```
 
 Check the covariances.
+
 ```{r}
 var(Z)
 var(X1)
@@ -306,10 +319,10 @@ X1 = N %*% Sp
 cov(X1)
 ```
 
-
 ## Densities
 
-We can use the package `mvtnorm`. If you don't have it, you can install it with `install.packages('mvtnorm')` and then load it.
+We can use the package `mvtnorm`. If you don't have it, you can install
+it with `install.packages('mvtnorm')` and then load it.
 
 ```{r}
 library(mvtnorm)
@@ -358,11 +371,13 @@ P
 ```
 
 Explicit calculation at mean.
+
 ```{r}
 dmvnorm(x = mu, mean = mu, sigma = Sigma)
 ```
 
 Generate points where we shall evaluate.
+
 ```{r}
 x1 = seq(from = mu[1]-5, to = mu[1]+5, length=50)
 x2 = seq(from = mu[2]-5, to = mu[2]+5, length=50)
@@ -376,7 +391,10 @@ fx = matrix(data = dmvnorm(x = all.x, mean = mu, sigma = Sigma), nrow = length(x
 ```{r}
 persp(x = x1, y = x2, z = fx, col = "white", xlab = "x1", ylab = "x2", zlab = "f(x)", phi = 70)
 ```
-Contour plot - purposely made x and y-axes the same length so that one can judge variability.
+
+Contour plot - purposely made x and y-axes the same length so that one
+can judge variability.
+
 ```{r}
 par(pty = "s")
 contour(x = x1, y = x2, z = fx, main = "Multivariate normal contour plot", 
@@ -384,6 +402,7 @@ contour(x = x1, y = x2, z = fx, main = "Multivariate normal contour plot",
 ```
 
 Two variables - Show eigenvectors on contour plot.
+
 ```{r}
 mu=c(5, 10)
 sigma=matrix(data = c(1, 0.5, 0.5, 1.25), nrow = 2, ncol = 2, byrow = TRUE)
@@ -413,7 +432,11 @@ arrows(x0 = 0, y0 = 0, x1 = 3*save.eig$vectors[1,2], y1 = 3*save.eig$vectors[2,2
 
 # Eigenvalues of sample covariance matrix
 
-Sample a covariance based on $\mathbb{S}_n = \frac{1}{n-1} \mathbb{X} \mathbb{X}^T$ where $\mathbb{X}$ is a $p \times n$ matrix with Gaussian entries with mean zero and variance 1. This gives a matrix $\mathbb{S}_n$ of size $p\times p$.
+Sample a covariance based on
+$\mathbb{S}_n = \frac{1}{n-1} \mathbb{X} \mathbb{X}^T$ where
+$\mathbb{X}$ is a $p \times n$ matrix with Gaussian entries with mean
+zero and variance 1. This gives a matrix $\mathbb{S}_n$ of size
+$p\times p$.
 
 ## Case $p$=50 and $n$=500
 
@@ -443,12 +466,14 @@ Sn = cov(X)
 ```
 
 Calculate the eigenvalues.
+
 ```{r}
 e=eigen(Sn)
 L=e$values
 ```
 
 Plot a histogram of the eigenvalues.
+
 ```{r}
 hist(L, breaks=50, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
 ```
@@ -468,15 +493,18 @@ p/n
 ```
 
 Calculate the eigenvalues.
+
 ```{r}
 e=eigen(Sn)
 L=eigen(Sn)$values
 ```
 
 Plot a histogram of the eigenvalues.
+
 ```{r}
 hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
 ```
+
 ```{r}
 p = 250
 n = 500
@@ -501,12 +529,14 @@ p/n
 ```
 
 Calculate the eigenvalues.
+
 ```{r}
 e=eigen(Sn)
 L=e$values
 ```
 
 Plot a histogram of the eigenvalues.
+
 ```{r}
 hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
 ```
@@ -520,6 +550,7 @@ Sn = X %*% t(X) / (n - 1)
 L = eigen(Sn, only.values=TRUE)$values
 hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
 ```
+
 ## Case $p$=250 and $n$=1000
 
 ```{r}
@@ -535,19 +566,24 @@ p/n
 ```
 
 Calculate the eigenvalues.
+
 ```{r}
 e=eigen(Sn)
 L=e$values
 ```
 
 Plot a histogram of the eigenvalues.
+
 ```{r}
 hist(L, breaks=p/3, xlim=c(0,1.2*max(L)), freq=FALSE, col=1, main='')
 ```
 
 ## Conclusion
 
-Do you notice something about the shape of the histograms as $p$ and $n$ change? Go back and think about what the ratio $p/n$ is for each plot. What do you think will happen to the histogram as $n \to \infty$ and $p \to \infty$ while keeping $0 < p/n < 1$.
+Do you notice something about the shape of the histograms as $p$ and $n$
+change? Go back and think about what the ratio $p/n$ is for each plot.
+What do you think will happen to the histogram as $n \to \infty$ and
+$p \to \infty$ while keeping $0 < p/n < 1$.
 
 ```{r}
 p = 5
