@@ -4,44 +4,52 @@ output:
   html_document:
     fig_height: 4
     toc: yes
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r}
 options(digits=4)
 ```
 
-In this workshop we are going to look at multivariate regression. One of our references is the book by Johnson and Wichern (2007) - Chapter 7. Some of the aims of this workshop are:
+In this workshop we are going to look at multivariate regression. One of
+our references is the book by Johnson and Wichern (2007) - Chapter 7.
+Some of the aims of this workshop are:
 
-- Do multivariate regression using `lm`
-- Compare to 'hand calculated' version
-- Think about some of the results in the lecture
+-   Do multivariate regression using `lm`
+-   Compare to 'hand calculated' version
+-   Think about some of the results in the lecture
 
 # Multivariate Regression
 
-The multivariate linear regression model is (see Section 7.7 in Johnson and Wichern and lectures) given by
-$$
+The multivariate linear regression model is (see Section 7.7 in Johnson
+and Wichern and lectures) given by $$
 \mathbf{Y} = \mathbf{X} \beta + \varepsilon
-$$
-where $\mathbf{Y}$ is of size $n \times p$, $\mathbb{X}$ is of size $n \times (q+1)$, $\beta$ is of size $(q+1) \times p$, and $\varepsilon$ is of size $n \times p$. The errors $\varepsilon = (\varepsilon_{ij})$ have zero mean and $\text{Cov}(\varepsilon_{(i)}, \varepsilon_{(k)}) = \sigma_{ij} I$
+$$ where $\mathbf{Y}$ is of size $n \times p$, $\mathbb{X}$ is of size
+$n \times (q+1)$, $\beta$ is of size $(q+1) \times p$, and $\varepsilon$
+is of size $n \times p$. The errors $\varepsilon = (\varepsilon_{ij})$
+have zero mean and
+$\text{Cov}(\varepsilon_{(i)}, \varepsilon_{(k)}) = \sigma_{ij} I$
 
 ## Bivariate case (p=2)
 
-We are first going to look at the the bivariate case ($p=2$) for a simple data set that is used in Johnson and Wichern (2007). This data come from exercise 7.25 and involve n=17 overdoses of the drug Amitriptyline (Rudorfer, 1982).
+We are first going to look at the the bivariate case ($p=2$) for a
+simple data set that is used in Johnson and Wichern (2007). This data
+come from exercise 7.25 and involve n=17 overdoses of the drug
+Amitriptyline (Rudorfer, 1982).
 
-There are two responses we want to model: 
- - TOT 
- - AMI
- 
-Here, TOT is total TCAD plasma level and AMI is the amount of Amitriptyline present in the TCAD plasma level.
+There are two responses we want to model: - TOT - AMI
 
-The covariates are as follows:
- - GEN, gender (male = 0, female = 1)
- - AMT, amount of drug taken at time of overdose
- - PR, PR wave measurement
- - DIAP, diastolic blood pressure
- - QRS, QRS wave measurement
+Here, TOT is total TCAD plasma level and AMI is the amount of
+Amitriptyline present in the TCAD plasma level.
+
+The covariates are as follows: - GEN, gender (male = 0, female = 1) -
+AMT, amount of drug taken at time of overdose - PR, PR wave
+measurement - DIAP, diastolic blood pressure - QRS, QRS wave measurement
 
 We download the data from a public website:
+
 ```{r}
 ami_data = read.table("http://static.lib.virginia.edu/statlab/materials/data/ami_data.DAT")
 names(ami_data) <- c("TOT","AMI","GEN","AMT","PR","DIAP","QRS")
@@ -52,21 +60,27 @@ ami_data
 ```
 
 We look at a summary of the data:
+
 ```{r}
 summary(ami_data)
 ```
 
 And the dimensions:
+
 ```{r}
 dim(ami_data)
 ```
 
-We can look at a pairs plot to view how the various covariates vary with respect to each other.
+We can look at a pairs plot to view how the various covariates vary with
+respect to each other.
+
 ```{r}
 pairs(ami_data, col="darkmagenta", pch=18)
 ```
 
-The inbuilt `lm` regression command can handle multivariate regression models. We fit a model with the response (TOT, AMI) and print a summary of the model.
+The inbuilt `lm` regression command can handle multivariate regression
+models. We fit a model with the response (TOT, AMI) and print a summary
+of the model.
 
 We shall see that it fits a separate model for each of the responses.
 
@@ -83,12 +97,12 @@ mlm1 = lm(cbind(TOT, AMI) ~ GEN + AMT + PR + DIAP + QRS, data = ami_data)
 mlm1
 ```
 
-
 ```{r}
 summary(mlm1)
 ```
 
 It basically gives the same output as fitting the models separately:
+
 ```{r}
 m1 = lm(TOT ~ GEN + AMT + PR + DIAP + QRS, data = ami_data)
 summary(m1)
@@ -97,16 +111,21 @@ summary(m2)
 ```
 
 We can extract the estimated $\hat\beta$ of the fitted model.
+
 ```{r}
 beta.hat = coef(mlm1)
 beta.hat
 ```
+
 Remember, $\beta$ is of size $(q+1) \times p$, so we can check:
+
 ```{r}
 dim(beta.hat)
 ```
 
-We could find $\hat\beta$ directly ourselves. First, we extract the appropriate columns from the `data.frame` to define $\mathbb{X}$ and $\mathbb{Y}$.
+We could find $\hat\beta$ directly ourselves. First, we extract the
+appropriate columns from the `data.frame` to define $\mathbb{X}$ and
+$\mathbb{Y}$.
 
 ```{r}
 X = model.matrix(~ GEN + AMT + PR + DIAP + QRS, data = ami_data)
@@ -119,11 +138,14 @@ Y
 ```
 
 Then $\hat \beta$ is given by (page 3 in lecture):
+
 ```{r}
 beta.hat.byhand = solve(t(X) %*% X) %*% t(X) %*% Y
 beta.hat.byhand
 ```
-Notice that our "by hand" estimate matches the one computed using the in-built `lm` function.
+
+Notice that our "by hand" estimate matches the one computed using the
+in-built `lm` function.
 
 ```{r}
 beta.hat
@@ -141,7 +163,9 @@ or as:
 t(Y-X%*%beta.hat) %*% (Y-X%*%beta.hat)
 ```
 
-or as the residual standard error (RSE) $s(\hat \beta)$, see page 2 lecture, given by taking the trace. The trace can be calculated by summing the diagonal entries of the matrix.
+or as the residual standard error (RSE) $s(\hat \beta)$, see page 2
+lecture, given by taking the trace. The trace can be calculated by
+summing the diagonal entries of the matrix.
 
 ```{r}
 tr = function(x) sum(diag(x))
@@ -155,7 +179,9 @@ tr( t(Y-X%*%beta.hat) %*% (Y-X%*%beta.hat) )
 dim(ami_data)
 ```
 
-Under a normality assumptions, the maximum likelihood estimator (MLE) for $\hat \Sigma$ is given by (see page 3 of lecture):
+Under a normality assumptions, the maximum likelihood estimator (MLE)
+for $\hat \Sigma$ is given by (see page 3 of lecture):
+
 ```{r}
 n = dim(ami_data)[1]
 Sigma.hat = t(Y-X%*%beta.hat) %*% (Y-X%*%beta.hat) / n
@@ -168,12 +194,18 @@ dim(beta.hat)
 
 # Low-rank inference
 
-We want to test that the matrix $\beta$ has a low rank structure, that is, a subset of the features/covariates play no role in predicting the targets/responses (i.e., TOT and AMI).
+We want to test that the matrix $\beta$ has a low rank structure, that
+is, a subset of the features/covariates play no role in predicting the
+targets/responses (i.e., TOT and AMI).
 
-The standard approach is to perform hypothesis testing (see page 5 in lecture). We want to partition $\beta = [\beta_1 \,\, \beta_2]$ and then test the hypothesis that
-\[ H_0 : \beta_1 = 0. \]
+The standard approach is to perform hypothesis testing (see page 5 in
+lecture). We want to partition $\beta = [\beta_1 \,\, \beta_2]$ and then
+test the hypothesis that $$ H_0 : \beta_1 = 0. $$
 
-The library `car` can handle multivariate regression and perform hypothesis testing on covariates being zero. Suppose we want to test the hypothesis that the coefficients of $\beta$ associated with the covariates PR, DIAP, and QRS are all zero. We could do:
+The library `car` can handle multivariate regression and perform
+hypothesis testing on covariates being zero. Suppose we want to test the
+hypothesis that the coefficients of $\beta$ associated with the
+covariates PR, DIAP, and QRS are all zero. We could do:
 
 ```{r}
 library(car)
@@ -187,7 +219,11 @@ mlm1
 lh.out = linearHypothesis(mlm1, hypothesis.matrix = c("PR = 0", "DIAP = 0", "QRS = 0"), test="Wilks")
 lh.out
 ```
-Notice that the "Sum of squares and products for error" (ie. residual) is the same as what we calculated above. It is $n \hat \Sigma = n \hat \Sigma_\Omega$ for the full model $(\Omega)$. This was $G$ in the lecture (e.g., see page 12 in lecture):
+
+Notice that the "Sum of squares and products for error" (ie. residual)
+is the same as what we calculated above. It is
+$n \hat \Sigma = n \hat \Sigma_\Omega$ for the full model $(\Omega)$.
+This was $G$ in the lecture (e.g., see page 12 in lecture):
 
 ```{r}
 G = n * Sigma.hat
@@ -195,6 +231,7 @@ G
 ```
 
 We can compute the reduced model $(\omega)$ by removing the covariates:
+
 ```{r}
 Xr = model.matrix(~ GEN + AMT, data = ami_data)
 Yr = model.matrix(~ 0 + TOT + AMI, data = ami_data)
@@ -213,25 +250,34 @@ beta.hat.reduced = solve(t(Xr) %*% Xr) %*% t(Xr) %*% Yr
 beta.hat.reduced
 ```
 
-We can calculate $\hat \Sigma_1 = \hat \Sigma_\omega$ the "sum of squares for error" for the reduced model ($\omega$).
+We can calculate $\hat \Sigma_1 = \hat \Sigma_\omega$ the "sum of
+squares for error" for the reduced model ($\omega$).
+
 ```{r}
 Sigma1.hat = t(Yr-Xr%*%beta.hat.reduced) %*% (Yr-Xr%*%beta.hat.reduced) / n
 Sigma1.hat
 ```
 
-The "extra sum of squares" is given by the difference. This is called the "Sum of squares and products for the hypothesis" in the model output above. Notice we get the same result. This is the same $H$ as in the lecture page 11.
+The "extra sum of squares" is given by the difference. This is called
+the "Sum of squares and products for the hypothesis" in the model output
+above. Notice we get the same result. This is the same $H$ as in the
+lecture page 11.
+
 ```{r}
 H = n * Sigma1.hat - n * Sigma.hat
 H
 ```
 
 The values of G and H can actually be extracted from the model above.
+
 ```{r}
 G = lh.out$SSPE
 H = lh.out$SSPH
 ```
 
-The Wilks test is what we studied in the lecture. The Wilks test statistic (i.e., likelihood ratio test) can be calculated "by hand" as:
+The Wilks test is what we studied in the lecture. The Wilks test
+statistic (i.e., likelihood ratio test) can be calculated "by hand" as:
+
 ```{r}
 det(G)/det(G + H)
 ```
@@ -250,13 +296,15 @@ rhs = L[, NCOL(L)]
 L = L[, -NCOL(L), drop = FALSE]
 ```
 
-Estimated linear function (hypothesis.matrix %*% coef - rhs):
+Estimated linear function (hypothesis.matrix %\*% coef - rhs):
+
 ```{r}
 value.hyp = L %*% beta.hat - rhs
 value.hyp
 ```
 
 Sum of squares and products for the hypothesis:
+
 ```{r}
 H
 ```
@@ -275,19 +323,23 @@ df + q1
 pf(H/q1, q1, df, lower.tail = FALSE)
 ```
 
-We accept the null hypothesis ("PR = 0", "DIAP = 0", "QRS = 0") and remove these covariates from the model:
+We accept the null hypothesis ("PR = 0", "DIAP = 0", "QRS = 0") and
+remove these covariates from the model:
+
 ```{r}
 mlm2 = update(mlm1, . ~ . - PR - DIAP - QRS)
 summary(mlm2)
 ```
 
 We can add new data and predict the response using:
+
 ```{r}
 nd = data.frame(GEN = 1, AMT = 1200)
 p = predict(mlm2, nd)
 ```
 
 And print out the prediction:
+
 ```{r}
 p
 ```
@@ -327,18 +379,19 @@ predictionEllipse <- function(mod, newdata, level = 0.95){
 }
 ```
 
-
 ```{r}
 predictionEllipse(mlm2, nd)
 ```
 
-# Multivariate regression (p > 2)
+# Multivariate regression (p \> 2)
 
 ```{r}
 library(mvtnorm)
 ```
 
-We are going to generate some fake data by making a mean vector and a covariance matrix.
+We are going to generate some fake data by making a mean vector and a
+covariance matrix.
+
 ```{r}
 n = 100
 q = 5
@@ -353,17 +406,20 @@ Sigma = (t(U) + U)/2
 ```{r}
 Sigma
 ```
+
 ```{r}
 dim(Sigma)
 ```
 
 Let's check that $\Sigma$ is positive definite:
+
 ```{r}
 lambda = min(eigen(Sigma, only.values = TRUE)$values)
 lambda
 ```
 
-If $\lambda < 0$ then the matrix $\Sigma$ is not positive definite, so we must fix it. One approach is to add values down the diagonal.
+If $\lambda < 0$ then the matrix $\Sigma$ is not positive definite, so
+we must fix it. One approach is to add values down the diagonal.
 
 ```{r}
 Sigma = Sigma + (1+1e-10) * abs(lambda) * diag(1, p, p)
@@ -372,7 +428,9 @@ Sigma = Sigma + (1+1e-10) * abs(lambda) * diag(1, p, p)
 ```{r}
 Sigma
 ```
+
 We check again:
+
 ```{r}
 min(eigen(Sigma, only.values = TRUE)$values)
 ```
@@ -382,6 +440,7 @@ cov2cor(Sigma)
 ```
 
 Alternatively, we could use the eigen decomposition
+
 ```{r}
 U = matrix(runif(q*q, 0, 1), q, q)
 Sigma = (t(U) + U)/2
@@ -392,11 +451,14 @@ D = E$values
 ```
 
 We have some negative eigenvalues:
+
 ```{r}
 D
 ```
 
-So we replace them with some different random ones and then reconstruct $\Sigma$.
+So we replace them with some different random ones and then reconstruct
+$\Sigma$.
+
 ```{r}
 D = runif(q, 0, max(D))
 Sigma = V %*% diag(D) %*% t(V)
@@ -405,6 +467,7 @@ Sigma = V %*% diag(D) %*% t(V)
 ```{r}
 Sigma
 ```
+
 ```{r}
 min(eigen(Sigma, only.values = TRUE)$values)
 ```
@@ -449,7 +512,9 @@ dim(Ys)
 ```{r}
 Ys
 ```
+
 We are going to create a formula for the model:
+
 ```{r}
 RHS = paste(paste0("c", 1:q), collapse= "+")
 RHS
@@ -470,7 +535,9 @@ data = data.frame(cbind(Ys, X))
 data
 ```
 
-We define the multivariate regression model. The inbuilt function `lm()` actually handles multivariate models.
+We define the multivariate regression model. The inbuilt function `lm()`
+actually handles multivariate models.
+
 ```{r}
 model <- lm(fmla, data = data)
 summary(model)
@@ -494,11 +561,13 @@ Y
 ```
 
 Then $\hat \beta$ is given by:
+
 ```{r}
 beta.hat = solve(t(X) %*% X) %*% t(X) %*% Y
 beta.hat = unname(zapsmall(beta.hat))
 beta.hat
 ```
+
 ```{r}
 model
 ```
@@ -506,4 +575,3 @@ model
 ```{r}
 linearHypothesis(model, hypothesis.matrix = c("c5 = 0"), test="Wilks")
 ```
-
