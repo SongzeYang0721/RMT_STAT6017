@@ -1,15 +1,19 @@
 ---
 title: "Workshop - Week 12"
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r}
 library(mvnfast)
 ```
 
-In the first part, we are going to remind some basic results around the Hotelling $T^2$ test statistic that was explored in Tutorial 4 and Tutorial 5.
+In the first part, we are going to remind some basic results around the
+Hotelling $T^2$ test statistic that was explored in Tutorial 4 and
+Tutorial 5.
 
 # Testing means: a classic result
-
 
 ## Checking the theorem - Anderson (2003), Theorem 5.2.2
 
@@ -35,18 +39,16 @@ curve(df(x, df1=p, df2=(n-p+1), ncp=ncp), 0, 1.2*max(test.stat),
       col="darkgreen", lwd=2, add=TRUE)
 ```
 
-
 ## Testing that the mean is zero
 
-The Hotelling $T^2$ test statistic is given by
-$$
+The Hotelling $T^2$ test statistic is given by $$
 T^2 = n\,(\bar{\mathbf{x}} - \mu_0 )^T \mathbb{S}^{-1} (\bar{\mathbf{x}} - \mu_0 )
-$$
-and if we assume that the observations $\mathbf{x}_1, \ldots, \mathbf{x}_n$ come from a multivariate Normal distribution then $T^2$ is distributed like a $\chi^2$ and we can use that knowledge to construct a hypothesis test:
-$$
+$$ and if we assume that the observations
+$\mathbf{x}_1, \ldots, \mathbf{x}_n$ come from a multivariate Normal
+distribution then $T^2$ is distributed like a $\chi^2$ and we can use
+that knowledge to construct a hypothesis test: $$
 H_0: \mu = \mu_0
-$$
-By default we assume that $\mu_0$ is the zero vector. 
+$$ By default we assume that $\mu_0$ is the zero vector.
 
 ### Implementation
 
@@ -98,7 +100,8 @@ hotelling(X)
 
 ### Compare to another package
 
-You can compare the result to the implementation from the `ICSNP` package by installing the package first with `install.packages('ICSNP')`
+You can compare the result to the implementation from the `ICSNP`
+package by installing the package first with `install.packages('ICSNP')`
 
 ```{r}
 library(ICSNP)
@@ -112,30 +115,37 @@ HotellingsT2(X, mu=mu, test = 'chi')
 HotellingsT2(X, mu=mu, test = 'f')
 ```
 
-## Understanding the performance 
+## Understanding the performance
 
-Recall that if you are testing a hypothesis concerning a parameter lying in a parameter space $\Theta$ of the form
-$$
+Recall that if you are testing a hypothesis concerning a parameter lying
+in a parameter space $\Theta$ of the form $$
 H_0: \theta \in \Theta_0 \quad\text{vs.}\quad H_1: \theta \in \Theta_1
-$$
-where $\Theta = \Theta_0 \cup \Theta_1$. Two types of error can occur:
+$$ where $\Theta = \Theta_0 \cup \Theta_1$. Two types of error can
+occur:
 
-  - Type I Error: the null hypothesis is rejected when in fact the null hypothesis is true
-  
-  - Type II Error: the null hypothesis is not rejected when in fact the null hypothesis is false
+-   Type I Error: the null hypothesis is rejected when in fact the null
+    hypothesis is true
+
+-   Type II Error: the null hypothesis is not rejected when in fact the
+    null hypothesis is false
 
 ### Empirical Size of the Test (Prob. of Type I Error)
 
-We can empirically study the Type I errors using a Monte-Carlo simulation.
+We can empirically study the Type I errors using a Monte-Carlo
+simulation.
 
-This is to evaluate whether the 'size' of the test achieves the advertised $\alpha$. To do this, we generate data with $\theta \in \Theta_0$ and then calculate the proportion of rejections of the null hypothesis $\theta \in \Theta_0$. In our case,
-\[ H_0: \theta \in \Theta_0 
-\quad \Leftrightarrow \quad H_0: \mu = \mu_0  \text{ where } \mu_0 = (0,0, \ldots, 0)^T.\]
+This is to evaluate whether the 'size' of the test achieves the
+advertised $\alpha$. To do this, we generate data with
+$\theta \in \Theta_0$ and then calculate the proportion of rejections of
+the null hypothesis $\theta \in \Theta_0$. In our case,
+$$ H_0: \theta \in \Theta_0 
+\quad \Leftrightarrow \quad H_0: \mu = \mu_0  \text{ where } \mu_0 = (0,0, \ldots, 0)^T.$$
 
-We should expect that the proportion is $\approx \alpha$ for our choice of $\alpha = 0.05$.
+We should expect that the proportion is $\approx \alpha$ for our choice
+of $\alpha = 0.05$.
 
 ```{r}
-M = 10000 # MC replicates
+M = 20000 # MC replicates
 
 alpha = 0.05
 
@@ -157,8 +167,10 @@ se.hat = sqrt(p.hat*(1 - p.hat)/M)
 c(p.hat, se.hat)
 ```
 
-We see that the empirical Type I error rate is `p.hat` and the standard error of the estimate is approximately given by `se.hat`. Ideally the error rate should be approximately equal to $\alpha$. For $p=3$, this seems to be working well.
-
+We see that the empirical Type I error rate is `p.hat` and the standard
+error of the estimate is approximately given by `se.hat`. Ideally the
+error rate should be approximately equal to $\alpha$. For $p=3$, this
+seems to be working well.
 
 ### Higher dimensionality
 
@@ -186,17 +198,22 @@ se.hat = sqrt(p.hat*(1 - p.hat)/M)
 c(p.hat, se.hat)
 ```
 
-We see that as $p$ increases the size is no longer $\approx \alpha$ as it should be!
+We see that as $p$ increases the size is no longer $\approx \alpha$ as
+it should be!
 
 ### Empirical Power of the Test (i.e. Prob. of Type II Error)
 
-The probability of a Type II error is $1-\mathbb{P}(\text{reject } H_0 | H_1 \text{ is true})$.
+The probability of a Type II error is
+$1-\mathbb{P}(\text{reject } H_0 | H_1 \text{ is true})$.
 
-To evaluate power of a test using simulation, we generate data that is in the $H_1: \theta \in \Theta_1$ regime and calculate the proportion of rejections of $H_0$. In our case,
-\[ H_1: \theta \in \Theta_1 
-\quad \Leftrightarrow \quad H_1: \mu \ne \mu_0.\]
+To evaluate power of a test using simulation, we generate data that is
+in the $H_1: \theta \in \Theta_1$ regime and calculate the proportion of
+rejections of $H_0$. In our case, $$ H_1: \theta \in \Theta_1 
+\quad \Leftrightarrow \quad H_1: \mu \ne \mu_0.$$
 
-We first perform the simulation for a low value of $p$. We take $\mu_0 = (5,5)$ and we vary $\mu_1$ to understand the power as $\mu_1$ changes.
+We first perform the simulation for a low value of $p$. We take
+$\mu_0 = (5,5)$ and we vary $\mu_1$ to understand the power as $\mu_1$
+changes.
 
 ```{r}
 M = 1000 # MC replicates
@@ -267,7 +284,14 @@ abline(h = alpha, lty=2)
 title("Empirical power")
 ```
 
-More formally, the power of a test is the power function $\pi: \Theta \to [0,1]$ which is the probability $\pi(\theta)$ of rejecting $H_0$ given that the true value of the parameter is $\theta$. Thus, for a given $\theta \in \Theta_1$, the probability of Type II error is $1-\pi(\theta_1)$. As $\mu_1$ increases the probability of Type II error is $1 - \pi(\theta_1)$, the higher the dimension the more likely we are to get a Type II error ($H_0$ is not rejected when in fact $H_0$ is false).
+More formally, the power of a test is the power function
+$\pi: \Theta \to [0,1]$ which is the probability $\pi(\theta)$ of
+rejecting $H_0$ given that the true value of the parameter is $\theta$.
+Thus, for a given $\theta \in \Theta_1$, the probability of Type II
+error is $1-\pi(\theta_1)$. As $\mu_1$ increases the probability of Type
+II error is $1 - \pi(\theta_1)$, the higher the dimension the more
+likely we are to get a Type II error ($H_0$ is not rejected when in fact
+$H_0$ is false).
 
 ```{r}
 plot(mu1s, 1-power.low, ylim=c(0,1), type='l', col='darkgreen', ylab='', xlab='mu1', lwd=2)
@@ -346,27 +370,33 @@ abline(h = alpha, lty=2)
 title("Empirical power vs. Sample Size")
 ```
 
-
 ## Two sample test of mean
 
-Consider two sets of observations, the first set has (population) mean $\mu_1$ and the second has $\mu_2$. We are going to look at a couple of hypothesis tests for determining if the mean of each set is equal (or not). That is, the null hypothesis is given by $\mu_1 = \mu_2$.
+Consider two sets of observations, the first set has (population) mean
+$\mu_1$ and the second has $\mu_2$. We are going to look at a couple of
+hypothesis tests for determining if the mean of each set is equal (or
+not). That is, the null hypothesis is given by $\mu_1 = \mu_2$.
 
 ## Test data
 
-Generate some test data for this workshop. We use the library `mvnorm` (or `MASS`) to sample from multivariate Normal distribution.
+Generate some test data for this workshop. We use the library `mvnorm`
+(or `MASS`) to sample from multivariate Normal distribution.
 
 Set the size of the two data sets equal.
+
 ```{r}
 n1 = 100
 n2 = 100
 ```
 
 Set the dimensionality of the data.
+
 ```{r}
 p = 5
 ```
 
 Set the true population means of the two samples.
+
 ```{r}
 mu1 = rep(0, p)
 mu2 = mu1
@@ -382,6 +412,7 @@ mu2
 ```
 
 We generate our standard (correlated) covariance matrix.
+
 ```{r}
 rho = 0.2
 Sigma = rho^(abs(outer(1:p, 1:p, "-"))) # AR1 covariance
@@ -392,6 +423,7 @@ Sigma
 ```
 
 Generate the two samples. We assume both sets have the same covariance.
+
 ```{r}
 X = rmvn(n1, mu1, Sigma)
 Y = rmvn(n2, mu2, Sigma)
@@ -428,6 +460,7 @@ hotelling.twosample = function(x, y, mu0=rep(0,ncol(x))) {
 ```
 
 We compare ours and the packages.
+
 ```{r}
 hotelling.twosample(X, Y)
 ```
@@ -436,24 +469,26 @@ hotelling.twosample(X, Y)
 HotellingsT2(X, Y, test = 'chi')
 ```
 
-
 # Testing means: a high-dimensional result
 
-## Bai and Saranadasa result 
+## Bai and Saranadasa result
 
 We are now going to look at the result proposed in the paper:
 
-*Bai ZD and Saranadasa H (1996). "Effect of high dimension: by an example of a two sample problem." Statistica Sinica, 6(2), 311–329.*
+*Bai ZD and Saranadasa H (1996). "Effect of high dimension: by an
+example of a two sample problem." Statistica Sinica, 6(2), 311--329.*
 
 ### A first go at a implementation
 
 We reuse the previous data and obtain the number of samples in each set.
+
 ```{r}
 n1 = dim(X)[1]
 n2 = dim(Y)[1]
 ```
 
 Calculate the parameters, etc.
+
 ```{r}
 tau = (n1 * n2)/(n1 + n2)
 n = n1 + n2 - 2
@@ -461,6 +496,7 @@ p = dim(X)[2]
 ```
 
 Calculate the sum of square difference of means.
+
 ```{r}
 diff = colMeans(X) - colMeans(Y)
 ```
@@ -473,9 +509,11 @@ norm(diff, "2")^2
 t(diff) %*% diff
 ```
 
-The pooled sample covariance, an alternative way using the in-built `cov` function.
+The pooled sample covariance, an alternative way using the in-built
+`cov` function.
+
 ```{r}
-S = ((n1 - 1) * cov(X) + (n2 - 1) * cov(Y))/n
+S = ((n1 - 1) * cov(X) + (n2 - 1) * cov(Y)) / n
 ```
 
 ```{r}
@@ -483,6 +521,7 @@ tr = function(x) { sum(diag(x)) }
 ```
 
 Calculate the proposed test statistic.
+
 ```{r}
 trS = tr(S)
 Bn.sq = (n^2)/((n + 2) * (n - 1)) * (tr(S %*% S) - trS^2/n)
@@ -490,11 +529,12 @@ test.BS = (tau*norm(diff, "2")^2 - trS)/sqrt( 2 * (n + 1)/n * Bn.sq )
 test.BS
 ```
 
-By Eq. (4.5) in the their paper, this is $N(0,1)$ so we use this information to get the $p$-value.
+By Eq. (4.5) in the their paper, this is $N(0,1)$ so we use this
+information to get the $p$-value.
+
 ```{r}
 pnorm(test.BS, lower.tail = FALSE)
 ```
-
 
 ### Implementation
 
@@ -525,18 +565,22 @@ bs.twosample = function(x, y, mu0=rep(0,ncol(x))) {
 ```
 
 We test our function on the test sample data.
+
 ```{r}
 bs.twosample(X, Y)
 ```
+
 ### Comparison to another implementation
 
-The Bai and Saranadasa test is available in the `highmean` package. Install it with `install.packages('highmean')`
+The Bai and Saranadasa test is available in the `highmean` package.
+Install it with `install.packages('highmean')`
 
 ```{r}
 library(highmean)
 ```
 
 We compare our result to theirs.
+
 ```{r}
 apval_Bai1996(X, Y)
 ```
@@ -574,7 +618,8 @@ for (i in 1:m) {
 power.bs = power
 ```
 
-We plot the empirical power of the Bai and Saranadasa test compared to Hotelling's $T^2$ test.
+We plot the empirical power of the Bai and Saranadasa test compared to
+Hotelling's $T^2$ test.
 
 ```{r}
 plot(mu1s, power.bs, ylim=c(0,1), type='l', col='darkgreen', ylab='Power', xlab='mu1', lwd=2)
@@ -583,7 +628,6 @@ abline(v = mu0, lty=2)
 abline(h = alpha, lty=2)
 title("Empirical power")
 ```
-
 
 ## Chen and Qin (2010)
 
@@ -594,17 +638,20 @@ We now look at Chen and Qin's test statistic.
 Generate some test data for this workshop.
 
 Set the size of the two data sets equal.
+
 ```{r}
 n1 = 100
 n2 = 100
 ```
 
 Set the dimensionality of the data.
+
 ```{r}
 p = 5
 ```
 
 Set the true population means of the two samples.
+
 ```{r}
 mu1 = rep(0, p)
 mu2 = mu1
@@ -619,34 +666,39 @@ mu1
 mu2
 ```
 
-We use a fancy technique to generate our standard (correlated) covariance matrix.
+We use a fancy technique to generate our standard (correlated)
+covariance matrix.
+
 ```{r}
 rho = 0.2
 Sigma = rho^(abs(outer(1:p, 1:p, "-"))) # AR1 covariance
 ```
 
 Generate the two samples. We assume both sets have the same covariance.
+
 ```{r}
 X = rmvnorm(n1, mu1, Sigma)
 Y = rmvnorm(n2, mu2, Sigma)
 ```
 
-
 ### Implement result
 
 Get the sample sizes.
+
 ```{r}
 n1 = dim(X)[1]
 n2 = dim(Y)[1]
 ```
 
 Dimensionality and degrees of freedom.
+
 ```{r}
 p = dim(X)[2]
 n = n1 + n2 - 2
 ```
 
 Calculate the test statistic.
+
 ```{r}
 S = ((n1 - 1)*cov(X) + (n2 - 1)*cov(Y))/n
 trS = sum(diag(S))
@@ -661,7 +713,9 @@ test.stat = as.numeric(T/sqrt((2/(n1*(n1 - 1)) + 2/(n2*(n2 - 1)) + 4/(n1*n2))*tr
 test.stat
 ```
 
-From Theorem 1, the asymptotic test statistic is $N(0,1)$. We use this to get the $p$-value.
+From Theorem 1, the asymptotic test statistic is $N(0,1)$. We use this
+to get the $p$-value.
+
 ```{r}
 pval = 1-pnorm(test.stat)
 print(pval)
@@ -753,7 +807,9 @@ title("Empirical power")
 
 ### Different population covariances
 
-Chen and Qin (2010) also proposes a test when the two sets of observations have different population covariances, see p.814. This could be implemented as follows:
+Chen and Qin (2010) also proposes a test when the two sets of
+observations have different population covariances, see p.814. This
+could be implemented as follows:
 
 ```{r}
 n1 = dim(X)[1]
@@ -808,7 +864,7 @@ pval = 1 - pnorm(test.stat)
 print(pval)
 ```
 
-# Blueprint: Classic -> MP -> UHD
+# Blueprint: Classic -\> MP -\> UHD
 
 ```{r}
 p = 50
@@ -862,10 +918,10 @@ lines(h2$mids, h2$density, type="S", col="red")
 lines(h3$mids, h3$density, type="S", col="magenta")
 legend("topright", c("Hotelling", "BaiSarandasa", "ChenQin"), fill=c("darkred", "red", "magenta"))
 ```
+
 ```{r}
 length(h1$density)
 ```
-
 
 # Change-point detection
 
@@ -896,4 +952,5 @@ s.cpt = changepoints(s)
 s.cpt
 ```
 
-See this review of R packages: https://lindeloev.github.io/mcp/articles/packages.html
+See this review of R packages:
+<https://lindeloev.github.io/mcp/articles/packages.html>

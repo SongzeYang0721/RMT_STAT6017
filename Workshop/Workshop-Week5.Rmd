@@ -481,7 +481,7 @@ Let's take a higher correlation and look at how the shape changes again.
 ```{r}
 p = 5
 n = 3200
-rho = 0.3 # correlation
+rho = 0.6 # correlation
 
 X = matrix(rnorm(p*n), p, n)
 
@@ -492,10 +492,10 @@ Q = eigs$vectors %*% diag(sqrt(eigs$values)) %*% solve(eigs$vectors)
 Q = matrix(rexp(p*p, 0.5), p, p)
 
 # generate sample covariance
-An = Q %*% X %*% t(X) %*% Q / n
+An = Q %*% X %*% t(X) %*% Q / (n-1)
 
 # KDE of eigenvalues 
-L=abs(eigen(An)$values)
+L = eigen(An)$values
 d = density(L, kernel="gaussian", bw="SJ")
 
 # plot histogram

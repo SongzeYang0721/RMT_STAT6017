@@ -4,11 +4,11 @@ title: "Workshop - Week 10"
 
 This week we consider PCA and the spiked covariance model.
 
-- PCA: classic and a high-dimensional example.
-- Distribution of the largest eigenvalue of a sample covariance matrix
-- The Tracy-Widom distribution of order 1
-- Solve ODE to obtain Tracy-Widom F1 Distribution
-- The spike covariance model
+-   PCA: classic and a high-dimensional example.
+-   Distribution of the largest eigenvalue of a sample covariance matrix
+-   The Tracy-Widom distribution of order 1
+-   Solve ODE to obtain Tracy-Widom F1 Distribution
+-   The spike covariance model
 
 # Principal component analysis
 
@@ -35,8 +35,7 @@ irispca = princomp(iris[-5])
 irispca
 ```
 
-
-We can next show the model summary and see that the first component (Comp. 1) explains a large proportion of the variance. 
+We can next show the model summary and see that the first component (Comp. 1) explains a large proportion of the variance.
 
 ```{r}
 summary(irispca)
@@ -47,18 +46,21 @@ sqrt(0.9246187)
 ```
 
 We can see the standard deviations of each of the principal components.
+
 ```{r}
 irispca$sdev
 ```
 
 Typically, a PCA de-means the data before performing the orthogonalisation algorithm. We can print the removed means with:
+
 ```{r}
 irispca$center
 ```
 
 We can extract the loadings (i.e., a matrix whose columns contain the eigenvectors).
+
 ```{r}
-loadings(irispca)
+loadings(irispca) # the matrix whose column are eigenvectors
 ```
 
 We can plot a screeplot of the PCA. The default uses a boxplot.
@@ -86,17 +88,20 @@ dim(data)
 ```
 
 We compute the (vector) mean.
+
 ```{r}
 mu = colMeans(data)
 print(mu)
 ```
 
 Notice this matches:
+
 ```{r}
 irispca$center
 ```
 
-We now subtract these means from the data.
+We now subtract these means from the data (de-mean'ing the data).
+
 ```{r}
 data = sweep(data, 2, mu)
 ```
@@ -105,17 +110,20 @@ data = sweep(data, 2, mu)
 round(colMeans(data))
 ```
 
-We now compute the covariance.
+We now compute the covariance of the de-mean data.
+
 ```{r}
 S = cov(data)
 ```
 
 We see that $p=4$ for the covariance matrix (as expected).
+
 ```{r}
 dim(S)
 ```
 
 We perform an eigendecomposition:
+
 ```{r}
 E = eigen(S)
 ```
@@ -125,6 +133,7 @@ E$values
 ```
 
 We can compute the proportion of the total variance explained by the components using the eigenvalues.
+
 ```{r}
 propvar = c()
 total = sum(E$values)
@@ -144,11 +153,13 @@ cumsum(propvar)
 ```
 
 The "loadings" are simply given by
+
 ```{r}
 round(E$vectors, 3)
 ```
 
 Notice this matches:
+
 ```{r}
 loadings(irispca, cutoff = 0.01)
 ```
@@ -170,6 +181,7 @@ gunzip(fn, overwrite=TRUE)
 ```
 
 We need our code to read the data.
+
 ```{r}
 read_idx = function(file_name, endian = "big")
 { if (!is.character(file_name)) stop("File_name must be character")
@@ -263,11 +275,13 @@ dim(X)
 ```
 
 Generate the principal components.
+
 ```{r}
 pca = princomp(X)
 ```
 
 Do a screeplot of the first 20 eigenvalues.
+
 ```{r}
 screeplot(pca, 20, type="lines", pch=16)
 ```
@@ -283,11 +297,13 @@ summary(pca)
 ```
 
 The loadings are given by:
+
 ```{r}
 dim(pca$rotation)
 ```
 
 The mean is:
+
 ```{r}
 mu = pca$center
 dim(mu) = c(28, 28)
@@ -298,6 +314,7 @@ imshow(mu)
 ```
 
 We extract the first and second principal components and reshape them into images.
+
 ```{r}
 pc1 = pca$rotation[,1]
 dim(pc1) = c(28,28)
@@ -327,36 +344,42 @@ We consider the distribution of the largest eigenvalue of a sample covariance ma
 ## Null case: $\Sigma = I_p$
 
 We set:
+
 ```{r}
 n = 100
 p = 50
 ```
 
 This gives:
+
 ```{r}
 y = p/n
 print(y)
 ```
 
 And the upper support of the MP distribution is:
+
 ```{r}
 b = (1+sqrt(y))^2
 b
 ```
 
 Eigenvalues given by `eigen` are in decreasing order, so we only need the first one. We write a function to extract this value.
+
 ```{r}
 max.eigen = function(x) {
-  eigen(x, only.values=TRUE)$values[1]
+  max(eigen(x, only.values=TRUE)$values)
 }
 ```
 
 We define our (population) covariance matrix.
+
 ```{r}
 Sigma = diag(1, p, p)
 ```
 
 We can sample 10000 Wishart random matrices with degree of freedom $n$ and then extract the largest eigenvalue of each one.
+
 ```{r}
 lambda1 = apply(rWishart(10000, n, Sigma), 3, max.eigen)
 ```
@@ -368,8 +391,8 @@ length(lambda1)
 We define the values $\mu_{np}$ and $\sigma_{np}$ (see lecture 10 p.3).
 
 ```{r}
-mu.np = (sqrt(n-1/2)+sqrt(p-1/2))^2
-sigma.np = (sqrt(n)+sqrt(p))*(1/sqrt(n-0.5)+1/sqrt(p-0.5))^(1/3)
+mu.np = (sqrt(n-1)+sqrt(p))^2 
+sigma.np = (sqrt(n-1)+sqrt(p))*(1/sqrt(n-1)+1/sqrt(p))^(1/3)
 ```
 
 $\mu_{np}$ is close to $b$ for large $p,n$.
@@ -397,16 +420,19 @@ F1 = (lambda1-mu.np)/sigma.np
 ```
 
 We see that the mean is:
+
 ```{r}
 mean(F1)
 ```
 
 and the standard deviation:
+
 ```{r}
 sd(F1)
 ```
 
 We now plot the histogram.
+
 ```{r}
 hist(F1, breaks=40, xlim=c(-4,4)) -> h
 ```
@@ -427,14 +453,14 @@ library(RMTstat)
 ```
 
 We use the library to plot the `dtw` against the histogram that we found.
+
 ```{r}
 plot(h$mids, h$density, type="s", xlab="", ylab="", ylim=c(0,0.5))
-curve(dtw, -5, 5, lwd=2, lty=3, col="darkmagenta", add=TRUE)
+curve(dtw, -4, 4, lwd=2, lty=3, col="darkmagenta", add=TRUE)
 title(main="Distribution of largest eigenvalue vs. TW density")
 ```
 
 The package `RMTstat` uses precomputed "magic" values to obtain the density.
-
 
 ## Solve ODE to obtain Tracy-Widom F1 Distribution
 
@@ -483,6 +509,7 @@ F.ode = ode(y=y0, times=tspan, func=deq, parms=NULL)
 ```
 
 This allows us to plot:
+
 ```{r}
 # time points
 s = F.ode[, "time"]
@@ -495,6 +522,7 @@ lines(h$mids, h$density, type="s", xlab="", ylab="", ylim=c(0,0.5))
 ```
 
 Alternatively, we can extract the solution for $q$ from the ODE solver and then use `approxfun` to create an interpolating function.
+
 ```{r}
 q = approxfun(tspan, F.ode[, "1"])
 plot(q, -5, 5, col = "darkgreen")
@@ -513,6 +541,7 @@ I = Vectorize(Ixx)
 ```
 
 Then we use the definition for $I'(s)$; see below Eq (21).
+
 ```{r}
 dIxx = function(s) {
   integrand = function(x) {
@@ -524,6 +553,7 @@ dI = Vectorize(dIxx)
 ```
 
 And then the definition for $J(s)$; see Eq (16).
+
 ```{r}
 Jxx = function(s) {
   integrand = function(x) {
@@ -535,6 +565,7 @@ J = Vectorize(Jxx)
 ```
 
 We plot them to check that they work.
+
 ```{r}
 plot(I, -5, 5, col="darkgreen", ylim=c(-10,10))
 curve(dI, -5, 5, col="darkred", add=TRUE)
@@ -553,6 +584,7 @@ lines(h$mids, h$density, type="s", xlab="", ylab="", ylim=c(0,0.5))
 ```
 
 We can compare it to the density obtained by the RMTstat package.
+
 ```{r}
 plot(f1, -5, 5, type='l', main="", xlim=c(-5, 5), lwd=2, col="green")
 curve(dtw, -5, 5, lwd=2, lty=3, col="magenta", add=TRUE)
@@ -560,16 +592,17 @@ curve(dtw, -5, 5, lwd=2, lty=3, col="magenta", add=TRUE)
 
 There are better techniques for numerically solving these Painlevé transcendents but they are harder to implement in R. See the paper by Bornemann (2010).
 
-
 # The spike covariance model
 
 We set:
+
 ```{r}
 n = 100
 p = 50
 ```
 
 This gives:
+
 ```{r}
 y = p/n
 print(y)
@@ -582,6 +615,7 @@ Recall that a critical point is $1+\sqrt{y}$
 ```
 
 We define our spikes:
+
 ```{r}
 alphas = c(5)
 alphas
@@ -592,11 +626,13 @@ alphas > 1+sqrt(y)
 ```
 
 $\alpha_1$ should be a large fundamental spike that converges to (see p.15 Lecture 10):
+
 ```{r}
 alphas[1] + y * alphas[1]/(alphas[1] - 1)
 ```
 
 We define our spiked (population) covariance matrix.
+
 ```{r}
 Sigma = diag(1, p, p)
 for (k in 1:length(alphas)) {
@@ -605,13 +641,17 @@ for (k in 1:length(alphas)) {
 ```
 
 We show our covariance matrix.
+
 ```{r}
 imshow(Sigma)
 ```
+
 ```{r}
 Sigma[1:5,1:5]
 ```
+
 We are going to compare against the Marcenko-Pastur density.
+
 ```{r}
 dmp = function(x, y, sigma=1) {
   a = (1-sqrt(y))^2
@@ -627,6 +667,7 @@ eigenvalues = function(x) {
 ```
 
 We generate many eigenvalues
+
 ```{r}
 lambdas = apply(rWishart(1000, n-1, Sigma)/(n-1), 3, eigenvalues)
 ```
@@ -640,6 +681,7 @@ length(lambdas)
 ```
 
 We see there is an accumulation of eigenvalues around the fundamental spike and then the bulk is described by the MP distribution.
+
 ```{r}
 hist(lambdas, breaks=1000, freq = FALSE)
 curve(dmp(x, y=p/n), from = 0, to = 1.5*max(lambdas), lty=1, lw=2, col=2, add=TRUE)

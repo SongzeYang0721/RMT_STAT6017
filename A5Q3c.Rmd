@@ -1,0 +1,117 @@
+---
+title: "Untitled"
+author: "Songze Yang u7192786"
+date: "2023-11-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(mvnfast)
+library(RMTstat)
+library(future.apply)
+library(knitr)
+library(pracma)
+```
+
+In addition to Question 2 (d), also reproduce the simulation experiment shown in Table 7 of [F] for the case $\frac{p}{n} = 0.5$ and only for LR-SN and JHN-SN for $p = 100, 200, 500$. Do this in the case of 1,000 replications.
+
+Answer to question 3 (c):
+
+```{r}
+library(pracma)
+rellipse_normalised <- function(n, p, Sigma = diag(p)){
+  # Calculate Z_ij from t with dof 4
+  Z <- matrix(rt(n * p, df = 4), ncol = p)
+  
+  # Calculate omega_i
+  omega <- numeric(n)
+  omega[1] <- 0.01  # assuming initial value of omega is 1, can be changed
+  for (i in 2:n) {
+    omega_squared <- 0.01 + 0.85 * omega[i - 1]^2 + 0.1 * sum(Z[i - 1, ]^2) / sum(diag(Sigma))
+    omega[i] <-  sqrt(omega_squared)
+  }
+
+  # Compute x
+  A <- sqrtm(Sigma)
+  Y <- omega*t(A$B%*%t(Z)) # (n, p)
+  
+  # Compute the Euclidean norm for each row
+  row_norms <- apply(Y, 1, function(Y_i) sqrt(sum(Y_i^2)))
+
+  # Normalize each row
+  normalized_Y <- Y/row_norms
+  
+  return(normalized_Y)
+}
+pcor = function(rho, p) {
+  Tn = matrix(0, p, p)
+  for (i in 1:p) {
+    for (j in 1:p) {
+      Tn[i,j] = rho^abs(i-j)
+    }
+  }
+  return(Tn)
+}
+```
+
+```{r}
+y = 1/2
+p_list = c(100, 200, 500)
+alpha <- 0.05
+```
+
+```{r}
+plan(multisession, workers = 8)
+n_sims = 1000
+LRSN_simulation <- function(n_sims, p, y){
+  t_LRSN = future_replicate(n_sims, {
+    n = p/y
+    Sigma = pcor(0.1, p)
+    X = rellipse_normalised(n, p, Sigma)
+    Sn = sum(diag(Sigma))*t(X)%*%X/n
+    L = eigen(Sn, only.values = TRUE)$values
+    L_ = sum(log(L))
+    mu_LRSN = p*(((y - 1)/y) *log(1 - y) - 1) + log(1 - y)/2 + y
+    sd_LRSN = sqrt(-2*log(1 - y) - 2*y)
+    LRSN = (L_ - mu_LRSN)/sd_LRSN
+    })
+}
+
+for(i in 1:length(p_list)){
+  t_LRSN <- LRSN_simulation(n_sims, p_list[i], y)
+  critical_left = qnorm(alpha/2)
+  critical_right = qnorm(1 - alpha/2)
+  mean.beta = mean(t_LRSN >= critical_left & t_LRSN <= critical_right)
+  cat("The test power is", (1 - mean.beta), "when the dimension is", p_list[i],"\n")
+}
+```
+
+```{r}
+n_sims = 1000
+JHNSN_simulation <- function(n_sims, p, y){
+  t_JHNSN = future_replicate(n_sims, {
+    n = p/y
+    Sigma = pcor(0.1, p)
+    X = rellipse_normalised(n, p, Sigma)
+    Sn = sum(diag(Sigma))*t(X)%*%X/n
+    L = eigen(Sn, only.values = TRUE)$values
+    L_ = sum(L^2)
+    Tn = L_/y - n - p
+    JHNSN = (Tn+1)/2
+    })
+}
+
+for(i in 1:length(p_list)){
+  t_JHNSN <- JHNSN_simulation(n_sims, p_list[i], y)
+  critical_left = qnorm(alpha/2)
+  critical_right = qnorm(1 - alpha/2)
+  mean.beta = mean(t_JHNSN >= critical_left & t_JHNSN <= critical_right)
+  cat("The test power is", (1 - mean.beta), "when the dimension is", p_list[i],"\n")
+}
+```
+
+```{r}
+rm(list=ls())
+```
+

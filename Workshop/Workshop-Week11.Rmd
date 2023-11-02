@@ -1,6 +1,8 @@
 ---
 title: "Workshop - Week 11"
 ---
+
+```{=tex}
 \newcommand{\X}{\mathbf{X}}
 \newcommand{\x}{\mathbf{x}}
 \newcommand{\T}{\mathbf{T}}
@@ -8,7 +10,7 @@ title: "Workshop - Week 11"
 \newcommand{\A}{\mathbf{A}}
 \newcommand{\C}{\mathbf{C}}
 \newcommand{\1}{\mathbb{1}}
-
+```
 ```{r}
 rm(list = ls())
 ```
@@ -20,12 +22,14 @@ We consider the construction of financial portfolios of stocks using the Markowi
 ## Closed-form solution
 
 Define the (population) returns of the stocks.
+
 ```{r}
 mu = c(4.27, 0.15, 2.85)
 names(mu) = c("S1", "S2", "S3")
 ```
 
 Define the (population) covariance matrix.
+
 ```{r}
 Sigma = matrix(c(1, 0.18, 0.11, 
                   0.18, 1.1, 0.26, 
@@ -36,6 +40,7 @@ colnames(Sigma) = c("S1", "S2", "S3")
 ```
 
 Show the correlations.
+
 ```{r}
 cov2cor(Sigma)
 ```
@@ -68,33 +73,36 @@ markowitz = function(mu, Sigma){
 ```
 
 We obtain the result using our function. This function returns the returns, the portfolio allocation, and a function that computes the risk.
+
 ```{r}
 mp = markowitz(mu, Sigma)
 ```
 
 We can extract the optimal return.
+
 ```{r}
 mp$R
 ```
 
 We can extract the optimal portfolio weights.
+
 ```{r}
 mp$Pi
 ```
 
 ## Comparing to a convex optimisation problem solver
 
-Our function is similar to solving the quadratic programming problems of the form $$\min \frac{1}{2} x' \Sigma\, x -\mathbb{1}' x$$ with the constraints $\1' x = 1$.
+Our function is similar to solving the quadratic programming problems of the form $$\min \frac{1}{2} x' \Sigma\, x -\mathbb{1}' x$$ with the constraints $\mathbb{1}' x = 1$.
 
 The function `solve.QP` is available with the `quadprog` package. Install it using `install.packages("quadprog")` and make it available in your R session.
+
 ```{r}
 #install.packages("quadprog")
 library("quadprog")
 ```
 
-The function `solve.QP` solves problems of the form
-$$ \min \frac{1}{2} x' D x -d' x$$
-with the constraints $A' x \ge b_0$. Here we set $D = \Sigma$, $d=\mathbf{1}$, $A = \mathbf{1}$, $d=0$, and $b_0 = 1$. This means we need to map our problem to this layout.
+The function `solve.QP` solves problems of the form $$ \min \frac{1}{2} x' D x -d' x$$ with the constraints $A' x \ge b_0$. Here we set $D = \Sigma$, $d=\mathbf{1}$, $A = \mathbf{1}$, $d=0$, and $b_0 = 1$. This means we need to map our problem to this layout.
+
 ```{r}
 d = matrix(0, ncol(Sigma), 1)
 A = matrix(1, ncol(Sigma), 1)
@@ -103,11 +111,13 @@ Pi = solve.QP(Sigma, d, A, bvec=1, meq=1)$solution
 ```
 
 We get the same optimal portfolio as our own solver (above).
+
 ```{r}
 Pi
 ```
 
 The portfolio return (in percent) is given by
+
 ```{r}
 R = t(Pi) %*% mu
 R
@@ -115,7 +125,7 @@ R
 
 ## Markowitz frontier
 
-Our closed-form solver above also provided a `sigma` function that maps from return $R$ (in percent) to level of risk $\sigma_0$. We can use this to draw the Markowitz frontier. 
+Our closed-form solver above also provided a `sigma` function that maps from return $R$ (in percent) to level of risk $\sigma_0$. We can use this to draw the Markowitz frontier.
 
 ```{r}
 mp = markowitz(mu, Sigma)
@@ -125,6 +135,7 @@ sigmas
 ```
 
 Notice how we flip the axes and draw the function the other way around so it is one-to-one.
+
 ```{r}
 plot(sigmas, returns, xlab=expression(sigma), ylab=expression(R), type = "l", main ="Markowitz frontier", xlim=c(0.7,1), col='darkmagenta', lwd=2)
 ```
@@ -132,12 +143,15 @@ plot(sigmas, returns, xlab=expression(sigma), ylab=expression(R), type = "l", ma
 ## Real-world example
 
 We can do a real-world example but we need to install a few packages.
-```
+
+```         
 install.packages("rvest")
 install.packages("quantmod")
 install.packages("corpcor")
 ```
-First we get the names of stocks within the ASX200 by scraping the table found on the Wikipedia page https://en.wikipedia.org/wiki/S%26P/ASX_200. We use the `rvest` package to use fancy syntax.
+
+First we get the names of stocks within the ASX200 by scraping the table found on the Wikipedia page <https://en.wikipedia.org/wiki/S%26P/ASX_200>. We use the `rvest` package to use fancy syntax.
+
 ```{r}
 library("rvest")
 url = "https://en.wikipedia.org/wiki/S%26P/ASX_200"
@@ -152,42 +166,50 @@ asx200
 ```
 
 We will download the returns using the `quantmod` package.
+
 ```{r include=FALSE}
 library("quantmod")
 ```
 
 We now get a list of the tickers that compose the ASX200.
+
 ```{r}
 all.tickers = lapply(asx200[,1], function(t) paste(t, ".AX", sep=""))$Code
 ```
 
 We can print them out.
+
 ```{r}
 all.tickers
 ```
 
 We are going to restrict the data downloaded to 5 randomly chosen stocks.
+
 ```{r}
 tickers = sample(all.tickers, 5)
 print(tickers)
 ```
 
 Alternatively, some crypto-currencies.
+
 ```{r}
 tickers = as.character(c("BTC-USD", "ETH-USD", "SOL1-USD", "DOGE-USD", "XRP-USD", "APT-USD"))
 ```
 
 Alternatively, evaluate this next line for a selection of stocks.
+
 ```{r}
 tickers = as.character(c("BHP.AX", "RIO.AX", "WBC.AX", "CBA.AX", "NAB.AX", "WDS.AX", "SUN.AX", "FMG.AX"))
 ```
 
 We get prices for all tickers.
+
 ```{r}
 getSymbols(tickers, from="2022-01-01", to="2022-10-01", src="yahoo", auto.assign = TRUE)
 ```
 
 We download daily returns and merge them into a single data.frame.
+
 ```{r}
 daily.returns = do.call(merge, lapply(tickers, function(x) dailyReturn(get(x))))
 names(daily.returns) = tickers
@@ -196,17 +218,20 @@ names(daily.returns) = tickers
 We now solve for the optimal portfolio.
 
 We will use the sample covariance matrix.
+
 ```{r}
 S = cov(daily.returns)
 round(S, 5)
 ```
 
 We check correlations.
+
 ```{r}
 round(cov2cor(S), 2)
 ```
 
 We will calculate the "plug-in optimal portfolio".
+
 ```{r}
 mu.hat = colMeans(daily.returns)
 mp = markowitz(mu.hat, S)
@@ -217,42 +242,50 @@ mp$R
 ```
 
 We get the optimal returns (in percent p.a.)
+
 ```{r}
 mp$R * 100 * 365 # % p.a.
 ```
 
 We get the optimal portfolio.
+
 ```{r}
 round(mp$Pi, 4)
 ```
 
 Construct an equally weighted portfolio.
+
 ```{r}
 eq.Pi = (mp$Pi*0+1)/length(mp$Pi)
 round(eq.Pi, 4)
 ```
+
 ```{r}
 t(eq.Pi) %*% mu.hat * 100
 ```
 
-We plot the value of the portfolio assuming that we have normalised it so the value starts at $1 on the first day.
+We plot the value of the portfolio assuming that we have normalised it so the value starts at \$1 on the first day.
+
 ```{r}
 V.p = cumprod(1 + daily.returns %*% mp$Pi)
 plot(time(daily.returns), V.p, type='l', main="Portfolio value in-sample")
 ```
 
 We get prices again for an out-of-sample test.
+
 ```{r}
 getSymbols(tickers, from="2022-10-01", src="yahoo")
 ```
 
 We download daily returns.
+
 ```{r}
 fwd.daily.returns = do.call(merge, lapply(tickers, function(x){ dailyReturn(get(x)) }))
 names(fwd.daily.returns) = tickers
 ```
 
-We plot the value of the portfolio assuming that we have normalised it so the value starts at $1 on the first day.
+We plot the value of the portfolio assuming that we have normalised it so the value starts at \$1 on the first day.
+
 ```{r}
 fwd.V.p = cumprod(1+fwd.daily.returns %*% mp$Pi)
 plot(time(fwd.daily.returns), fwd.V.p, type='l', main="Portfolio value out-of-sample")
@@ -272,6 +305,7 @@ res = solve.QP(S, zeros, aMat, bvec=b0, meq = 1)
 ```
 
 We get the optimal returns (in percent p.a.)
+
 ```{r}
 Pi.p.longonly = res$solution
 R = Pi.p.longonly %*% mu.hat
@@ -279,6 +313,7 @@ R * 100 * 250 # % p.a.
 ```
 
 We compare the long/short optimal portfolio to the long-only portfolio in-sample.
+
 ```{r}
 Vl.p = cumprod(1+daily.returns %*% Pi.p.longonly)
 plot(time(daily.returns), V.p, type='l', main="Portfolio value in-sample")
@@ -287,16 +322,19 @@ legend("topleft", c("long/short", "long only"), lty=c(1,2), col=c(1,"red"), text
 ```
 
 We compare the long/short optimal portfolio to the long-only portfolio out-of-sample.
+
 ```{r}
 fwd.Vl.p = cumprod(1+fwd.daily.returns %*% Pi.p.longonly)
 plot(time(fwd.daily.returns), fwd.V.p, type='l', main="Portfolio value out-of-sample")
 lines(time(fwd.daily.returns), fwd.Vl.p, type='l', lty=2, col='red')
 legend("topleft", c("long/short", "long only"), lty=c(1,2), col=c(1,"red"), text.width=40, bty = "n")
 ```
+
 ```{r}
 lambdas = eigen(S, only.values = TRUE)$values
 plot(lambdas, pch=19, type="b")
 ```
+
 Mean price change over a year.
 
 ```{r}
@@ -309,14 +347,14 @@ Covariation in price over a year.
 round(S * 100 * 250, 2)
 ```
 
-
 # Over-prediction of returns: a simulation study
 
-We illustrate the over-prediction phenomena by performing a Monte-Carlo simulation. 
+We illustrate the over-prediction phenomena by performing a Monte-Carlo simulation.
 
 ## Realistic parameters
 
 We choose some "realistic" parameters for our stock price simulation.
+
 ```{r}
 avg.yearly.return = 6
 avg.yearly.retsd = 4.5
@@ -327,16 +365,19 @@ avg.yearly.retsd = 4.5
 First, we run through the steps that we are going to take in our simulation to make sure that everything works well.
 
 First, we set the number of stocks.
+
 ```{r}
 p = 10
 ```
 
 Generate stock names.
+
 ```{r}
 tickers = as.character(lapply(seq(1,p), function(x) paste("S", x, sep="")))
 ```
 
 Generate some realistic (population) returns and print the corresponding percentage return per annum.
+
 ```{r}
 mu = rnorm(p, mean=avg.yearly.return / (100 * 250), sd=avg.yearly.retsd / (100 * 250))
 names(mu) = tickers
@@ -344,6 +385,7 @@ mu * 100 * 250 # % p.a.
 ```
 
 We generate a reasonable (population) covariance matrix for daily returns.
+
 ```{r}
 pcor = function(rho, p) {
   Tn = matrix(0, p, p)
@@ -365,28 +407,33 @@ print(Sigma * 100 * 250, digits=2) # % p.a.
 ```
 
 We look at the correlations.
+
 ```{r}
 print(cov2cor(Sigma), digits=2)
 ```
 
 We calculate the optimal theoretical portfolio based on the (population) $\mu$ and $\Sigma$.
+
 ```{r}
 mp = markowitz(mu, Sigma)
 ```
 
 We get the optimal portfolio.
+
 ```{r}
 Pi = mp$Pi
 Pi
 ```
 
 And the optimal returns.
+
 ```{r}
 R = mp$R
 R * 100 * 250 # % p.a.
 ```
 
 We now simulate large number of returns for the stocks. We use the `mvtnorm` package so we can take into account $\Sigma$.
+
 ```{r}
 library(mvtnorm)
 ```
@@ -398,17 +445,20 @@ colnames(Returns) = tickers
 ```
 
 We plot the simulated stock returns.
+
 ```{r}
 plot(ts(Returns), type='l', main="Stock Returns")
 ```
 
-We plot the simulated stock prices, assuming that all stocks start at $1 price at the initial time. This gives us "realistic" prices over $n=`r n`$ days.
+We plot the simulated stock prices, assuming that all stocks start at \$1 price at the initial time. This gives us "realistic" prices over $n=`r n`$ days.
+
 ```{r}
 Prices = apply(Returns, 2, function(x) cumprod(1+x))
 plot(ts(Prices))
 ```
 
 We now calculate the sample mean.
+
 ```{r}
 sample.mu = colMeans(Returns)
 names(sample.mu) = tickers
@@ -416,6 +466,7 @@ sample.mu * 100 * 250 # % p.a.
 ```
 
 And sample covariance matrix.
+
 ```{r}
 S = cov(Returns)
 rownames(S) = tickers
@@ -423,28 +474,33 @@ colnames(S) = tickers
 ```
 
 We print the correlations.
+
 ```{r}
 print(cov2cor(S), digits=2)
 ```
 
 We get the ratio of $p$ to $n$.
+
 ```{r}
 y = p/n
 y
 ```
 
 We calculate the "plug-in portfolio" based on the sample mean $\bar{\mathbb{x}}$ and sample covariance $\mathbb{S}$.
+
 ```{r}
 mp = markowitz(sample.mu, S)
 ```
 
 We get the "plug-in portfolio".
+
 ```{r}
 Pi.p = mp$Pi
 Pi.p
 ```
 
 And the "plug-in returns".
+
 ```{r}
 R.p = mp$R
 R.p * 100 * 250 # % p.a.
@@ -453,21 +509,25 @@ R.p * 100 * 250 # % p.a.
 ## Full simulation
 
 We are going to perform this simulation over the following values of $p$.
+
 ```{r}
 ps = c(10, 50, 100, 120, 160, 200, 220, 240)
 ```
 
 For each value of $p$, we are going to perform $M$ simulations and take the average of the plug-in returns.
+
 ```{r}
 M = 30
 ```
 
 The number of days for returns.
+
 ```{r}
 n = 250
 ```
 
 We now do the full simulation based on the steps above.
+
 ```{r}
 R = rep(0, length(ps))
 avg.Rp = rep(0, length(ps))
@@ -505,13 +565,13 @@ hist(Rp * 100 * 250, breaks='FD')
 ```
 
 Plot in terms of % p.a.
+
 ```{r}
 plot(ps, avg.Rp * 100 * 250, type='l', lty=3)
 lines(ps, R * 100 * 250, col='red')
 ```
 
-
-# A parametric model for the sample covariance 
+# A parametric model for the sample covariance
 
 We will need the Marchenko-Pastur density.
 
@@ -524,6 +584,7 @@ dmp = function(x, y, sigmasq=1) {
 ```
 
 Sample some eigenvalues from a sample covariance matrix.
+
 ```{r}
 p = 500
 n = 1000
@@ -536,13 +597,15 @@ Ls = eigenvalues(S)
 ```
 
 Plot the histogram of the eigenvalues compared to the MP density.
+
 ```{r}
 hist(Ls, breaks=30, plot=F) -> h
 plot(h$breaks, c(h$density, 0), type="s",  xlab="", ylab="", xlim=c(0, 1.2*max(Ls)), ylim=c(0,1))
 curve(dmp(x, y=p/n), 0, 1.2*max(Ls), lty=3, lwd=2, col="darkmagenta", add=TRUE)
 ```
 
-Plot the Gaussian kernel estimate with bandwidth $h=0.05$ of the eigenvalues compared to the MP density. 
+Plot the Gaussian kernel estimate with bandwidth $h=0.05$ of the eigenvalues compared to the MP density.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 curve(dmp(x, y=p/n, sigmasq=1), 0, 1.2*max(Ls), lty=3, lwd=1, ylim=c(0,2))
@@ -551,10 +614,10 @@ lines(d, col=1, lwd=1)
 par(opar)
 ```
 
-
 ## Inverse cubic density
 
 The function $h$ from Section 5.
+
 ```{r}
 h_ = function(t, alpha=0.5) {
   c = 2*(1-alpha)^2
@@ -575,7 +638,6 @@ for (alpha in c(0.6, 0.7, 0.8, 0.9, 0.99)) {
   lines(x, h(x, alpha))
 }
 ```
-
 
 ## Generating a population covariance matrix
 
@@ -598,19 +660,20 @@ print(diag(Sigma))
 eigenvalues(Sigma)
 ```
 
-
 ```{r}
 rotate = function(A) {t(A)[ncol(A):1,]}
 image(rotate(Sigma), axes=FALSE)
 ```
 
 Generate an example sample covariance matrix and calculate its eigenvalues.
+
 ```{r}
 eigenvalues = function(x) eigen(x, only.values=T)$values
 Ls = apply(rWishart(1, (n-1), Sigma)/(n-1), 3, eigenvalues)
 ```
 
 Plot the histogram of the eigenvalues.
+
 ```{r}
 hist(Ls, breaks=50, plot=F) -> h
 plot(h$breaks, c(h$density, 0), type="s",  xlab="", ylab="", xlim=c(0, 1.2*max(Ls)), ylim=c(0,1))
@@ -628,6 +691,7 @@ print(t)
 ```
 
 Using $m$ points outside of the support of the LSD.
+
 ```{r}
 m = 20 # should be >= p ?
 u = seq(-10, 0, length.out = m)
@@ -643,6 +707,7 @@ sn = Vectorize(function(u) {
 ```
 
 We solve the least-squares problem by creating an objective function to minimise.
+
 ```{r}
 obj = function(w) {
   y = p/n
@@ -665,6 +730,7 @@ obj = function(w) {
 ```
 
 Solve the constrained problem and extract our estimated weights $\hat w$.
+
 ```{r}
 theta = c(0.5,0.5,0.5,0.5,0.5) # initial guess
 
@@ -680,6 +746,7 @@ print(wh, digits=2)
 ```
 
 A linear combination of discrete weights gives a linear combination of MP densities with different $\sigma^2$.
+
 ```{r}
 phi = function(x, w) {
   density = 0*x # handle vector 'x' case
@@ -691,6 +758,7 @@ phi = function(x, w) {
 ```
 
 Plot the density against the histogram.
+
 ```{r}
 par(xaxs="i", yaxs="i", cex=0.8, cex.axis=1.0) -> opar
 hist(Ls, breaks=50, plot=F) -> h
@@ -702,17 +770,17 @@ par(opar)
 
 ## Second model: solving for weight and location
 
-We are going to solve for the position of the eigenvalues as well as the weights. This means that we are solving for $(2k-1)$ parameters
-$$
+We are going to solve for the position of the eigenvalues as well as the weights. This means that we are solving for $(2k-1)$ parameters $$
 \theta = (\lambda_1, \ldots, \lambda_k, w_1, \ldots, w_{k-1})
-$$
-and $w_k = 1-\sum_{i=1}^{k-1} w_i$. This means our initial guess will look something like:
+$$ and $w_k = 1-\sum_{i=1}^{k-1} w_i$. This means our initial guess will look something like:
+
 ```{r}
 theta = c(0.5, 1, 2, 3, 4, 5, 6, # positions
           rep(0.1, 6))           # weights
 ```
 
 We solve the least-squares problem by creating an objective function to minimise.
+
 ```{r}
 obj = function(theta) {
   y = p/n
@@ -776,6 +844,7 @@ print(w.hat, digits=2)
 ```
 
 A linear combination of discrete weights gives a linear combination of MP densities with different $\sigma^2$.
+
 ```{r}
 phi = function(x, lambda, w) {
   density = 0. * x # handle vector 'x' case
@@ -792,6 +861,7 @@ plot(x, phi(x, lambda.hat, w.hat), type='l')
 ```
 
 Plot the density against the histogram.
+
 ```{r}
 hist(Ls, breaks=100, plot=F) -> h
 plot(h$breaks, c(h$density, 0), type="s",  xlab="", ylab="", xlim=c(0, 1.2*max(Ls)), ylim=c(0,1))
@@ -854,6 +924,7 @@ print(w.hat, digits=2)
 ```
 
 Plot the density against the histogram.
+
 ```{r}
 hist(Ls, breaks=100, plot=F) -> h
 plot(h$breaks, c(h$density, 0), type="s",  xlab="", ylab="", xlim=c(0, 1.2*max(Ls)), ylim=c(0,1))

@@ -1,0 +1,108 @@
+---
+title: "Assignment 5"
+author: "Songze Yang u7192786"
+header-includes:
+  - \usepackage{fancyhdr}
+  - \usepackage{amsmath}
+  - \pagestyle{fancy}
+  - \fancyhead[CO,CE]{STAT3017/STAT6017 - Big Data Statistics - Sem 2 2023}
+  - \fancyhead[LO,LE]{}  # Clear the left side header
+  - \fancypagestyle{plain}{\pagestyle{fancy}}  # Make plain page style same as fancy
+  - \renewcommand{\headrulewidth}{0.4pt}  # Optional: adds a line under the header
+output:
+  pdf_document: 
+    latex_engine: xelatex
+    keep_tex: true
+  html_document: default
+---
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(eval=FALSE)
+library(mvnfast)
+library(RMTstat)
+library(future.apply)
+library(knitr)
+library(expm)
+```
+
+Question 2
+
+In this question, we shall consider high-dimensional sample covariance matrices of data that is sampled from an elliptical distribution. We say that a random vector $\mathbf{x}$ with zero mean follows an elliptical distribution if (and only if) it has the stochastic representation $$ \mathbf{x} = \xi A \mathbf{u}, \quad (\star) $$where the matrix $A \in \mathbb{R}^{p \times p}$ is nonrandom and $\text{rank}(A) = p$, $\xi \geq 0$ is a random variable representing the radius of $\mathbf{x}$, and $u \in \mathbb{R}^p$ is the random direction, which is independent of $\xi$ and uniformly distributed on the unit sphere $S_{p-1}$ in $\mathbb{R}^p$, denoted by $\mathbf{u} \sim \text{Unif}(S_{p-1})$. The class of elliptical distributions is a natural generalization of the multivariate normal distribution, and contains many widely used distributions as special cases including the multivariate t-distribution, the symmetric multivariate Laplace distribution, and the symmetric multivariate stable distribution.
+
+(a) Write a function runifsphere(n,p) that samples $n$ observations from the distribution $\text{Unif}(S_{p-1})$ using the fact that if $\mathbf{z} \sim N_p(0, I_p)$ then $\frac{\mathbf{z}}{\| \mathbf{z} \|} \sim \text{Unif}(S_{p-1})$. Check your results by:
+
+set $p = 25$, $n = 50$ and show that the (Euclidean) norm of each observation is equal to 1.
+
+Answer to question 2 (a) (1):
+
+Now we show that the (Euclidean) norm of each observation is equal to 1 in (1):
+
+generate a scatter plot in the case $p = 2$, $n = 500$ to show that the samples lie on a circle.
+
+Answer to question 2 (a) (2):
+
+Now we show that the observations lie on a circle in (2):
+
+generate a scatter plot in the case $p = 2$, $n = 500$ to show that the samples lie on a circle.
+
+Answer to question 2 (a) (2):
+
+Now we show that the observations lie on a circle in (2):
+
+We can see that the plot matches the distribution very well.
+
+Suppose that $\mathbf{x}_1, \mathbf{x}_2, \dots, \mathbf{x}_n$ are $p$-dimensional observations sampled from an elliptic distribution $(\star)$. We stack these observations into the data matrix $\mathbf{X}$ and calculate the sample covariance matrix $\mathbf{S}_n := \mathbf{X} \mathbf{X}^T / n$. Theorem 2.2 of the recent paper [C] is a central limit theorem for linear spectral statistics (LSS) of $\mathbf{S}_n$. For example, Eq. (2.10) in [C] provides the case of the joint distribution of the LSS $\phi_1(x) = x$ and $\phi_2(x) = x^2$. Following the notation used there (for all the following terms in this question). Perform a simulation experiment to examine the fluctuations of $\hat{\beta}_{n1}$ and $\hat{\beta}_{n2}$. In the experiment, take $H_p = \frac{1}{2} \delta_1 + \frac{1}{2} \delta_2$ and choose the distribution of $\xi \sim k_1 \text{Gamma}(p, 1)$ with $k_1 = \frac{1}{\sqrt{p + 1}}$. Set the dimensions to be $p = 200$ and $n = 400$. Choose the number of simulations based on the computational power of your machine. Similar to Figure 1 in [C], use a QQ-plot to show normality.
+
+Answer to question 2 (b):
+
+The population $PSD \ H_p$ is assumed to be fixed and therefore we have $H_p = H$. Immediately, we have the following conclusion:
+
+$$
+\gamma_{nj} = \int_{} t^jdH_p(t) = \int_{} t^jdH(t) = \gamma_j
+$$
+
+In this question, we assume that the $H_p = \frac{1}{2} \delta_1 + \frac{1}{2} \delta_2 \Rightarrow \Sigma = diag(1,..,1,2,...,2)=AA^T$ with equal number of 1's and 2's so we can compute their respectively values:
+
+\begin{align*}
+\gamma_1 = \gamma_{n1} = \int t dH_p(t) = \int t d(\frac{1}{2}\delta_1 + \frac{1}{2}\delta_2) = \frac{1}{2} \int t d\delta_1(t) + \frac{1}{2} \int t d \delta_2(t) \\
+\gamma_2 = \gamma_{n2} = \int t^2 dH_p(t) = \int t^2 d(\frac{1}{2}\delta_1 + \frac{1}{2}\delta_2) = \frac{1}{2} \int t^2 d\delta_1(t) + \frac{1}{2} \int t^2 d \delta_2(t)
+\end{align*}
+
+
+By property:
+
+\begin{equation*}
+\int f(t) \delta_a(t)dt = f(a) \tag{1}
+\end{equation*}
+
+We have that:
+
+\begin{align*}
+\int t \, d \delta_2(t) &= 1 \\
+\int t \, d \delta_2(t) &= 2 \\
+\int t^2 \, d\delta_1(t) &= 1^2 \\
+\int t^2 \, d\delta_2(t) &= 2^2 \\
+\end{align*}
+
+
+
+$$
+\gamma_1  = \gamma_{n1} = 1.5 \quad \text{and} \quad \gamma_2 = \gamma_{n2} =2.5 \quad \text{similarly} \quad \gamma_3 = 4.5 \quad \text{and} \quad \gamma_4 = 8.5
+$$
+
+The value we need to show the CLT assuming $p = 200, \quad n = 400 \quad \text{and} \quad \frac{p}{n} :=c_n = c = \frac{1}{2}$:
+
+\begin{align*}
+\tau & = 4 \\
+\beta_{n1} & = \gamma_{n1} = 1.5, \\
+\beta_{n2} & = \gamma_{n2} + c_n\gamma^2_{n1} = 2.5 + \frac{1}{2} \times 1.5^2 = 3.625, \\
+\nu_1 & = 0, \\
+\nu_2 & = c\gamma_2 + c(\tau - 2)\gamma_1, \\
+\psi_{11} & = 2c\gamma_2 + c(\tau - 2)\gamma^2_1 = 2.5 + 1.5^2 = 4.75, \\
+\psi_{22} & = 8c\gamma_4 + 4c^2\gamma^2_2 + 16c^2\gamma_1\gamma_3 + 8c^3\gamma^2_1 \gamma_2 \\
+& \quad + 4c(\tau - 2)(c\gamma^2_1 + \gamma_2)^2 = 125.4375
+\end{align*}
+
+
+
+Let's code up these variables into R:
